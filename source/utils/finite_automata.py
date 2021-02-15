@@ -2,30 +2,34 @@ from abc import ABCMeta, abstractmethod
 from automata import Automata
 from automata import Transition
 from automata import AutomataState
+from automata import FINITE_AUTOMATA
 
 class FiniteAutomata(Automata):
 
-	def __init__(self, initial_state):
-		super().__init__(initial_state)
-		self.type = automata.__FINITE_AUTOMATA 
+	def __init__(self):
+		super().__init__()
+		self.type = FINITE_AUTOMATA 
 
-	@abstractmethod
 	def apply_curr_state(self, automata_state):
 		self.at = automata_state.at
 		self.pointer = automata_state.pointer
 
-	@abstractmethod
 	def create_curr_state(self):
 		automata_state = AutomataState()
 		automata_state.at = self.at
-		automata_state.pointer = automata_state.pointer
+		automata_state.pointer = self.pointer
 		return automata_state
+
+	def accept(self):
+		reed_word = self.pointer == len(self.word)
+		is_final_state = self.at in self.final_states
+		return reed_word and is_final_state
 
 class AFTransition(Transition):
 
-	def __init__(self, char):
-		super().__init__(char)
-		self.type = automata.__FINITE_AUTOMATA 
+	def __init__(self, from_, to, char = Transition.EPSILON):
+		super().__init__(from_, to, char)
+		self.type = FINITE_AUTOMATA 
 		
 	def is_respected(self, af_automata):
 		p = af_automata.pointer

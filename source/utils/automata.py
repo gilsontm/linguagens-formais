@@ -1,27 +1,37 @@
 from abc import ABCMeta, abstractmethod
 from queue import Queue
 
-__FINITE_AUTOMATA = 0
-__PUSH_DOWN_AUTOMATA = 1
-__LINEAR_BOUNDED_AUTOMATA = 2
+FINITE_AUTOMATA = 0
+PUSH_DOWN_AUTOMATA = 1
+LINEAR_BOUNDED_AUTOMATA = 2
 
 class AutomataException(Exception):
 	pass
 
 class Automata:
 
-	__OVERFLOW_SIZE = 1000
+	__OVERFLOW_SIZE = 10000
 
 	__metaclass__ = ABCMeta
 
-	def __init__(self, initial_state):
+	def __init__(self):
 		self.states = set()
 		self.transitions = set()
 		self.adjacent = {}
 		self.r_adjacent = {}
 		
-		self.initial_state = initial_state
+		self.initial_state = None
 		self.final_states = set()
+
+	def set_initial_state(self, state):
+		if state not in self.states:
+			raise AutomataException('')
+		self.initial_state = state
+
+	def set_final_state(self, state):
+		if state not in self.states:
+			raise AutomataException('')
+		self.final_states.add(state)
 
 	def declare_state(self, state):
 		if state in self.states:
@@ -72,7 +82,7 @@ class Automata:
 		return self.r_adjacent[state]
 
 	def declare_transition(self, transition):
-		if transition is not Transition or self.type != transition.type:
+		if self.type != transition.type:
 			raise AutomataException('Transition and automata type missmatch')
 		
 		s1 = transition.from_
@@ -96,16 +106,30 @@ class Automata:
 
 		while not self.accepted and not self.queue.empty():
 			self.dequeue_state()
+
 			p = self.pointer
-			adj = self.get_adjacents(self.word[p], self.at)
+			if p == len(self.word):
+				break
+			adj = self.get_adjacents(self.word[p], self.at) \
+				+ self.get_adjacents(Transition.EPSILON, self.at)
+
 			curr_state = self.create_curr_state()
 			for transition in adj:
 				if transition.is_respected(self):
 					transition.transit(self)
+
+					if self.accept():
+						self.accepted = True
+						break
+
 					self.queue_current_state()
 					self.apply_curr_state(curr_state)
 
 		return self.accepted
+
+	@abstractmethod
+	def accept(self):
+		pass
 
 	@abstractmethod
 	def apply_curr_state(self, automata_state):
@@ -116,12 +140,14 @@ class Automata:
 		pass
 
 	def queue_current_state(self):
+		if self.queue.qsize() == self.queue.maxsize:
+			raise AutomataException()
 		automata_state = self.create_curr_state()
 		self.queue.put(automata_state)
 
 	def dequeue_state(self):
 		automata_state = self.queue.get()
-		apply_curr_state(automata_state)
+		self.apply_curr_state(automata_state)
 
 	def is_deterministic(self):
 		# Iterate over all states
@@ -129,35 +155,29 @@ class Automata:
 			keys = self.get_all_adjacents(state)
 			# Iterate over all alphabet chars that generate transitions
 			for key in keys:
-				key_transitions = self.get_adjacents(key, state)
-				# Iterate over all transitions of that alphabet char
-				for transitions in key_transitions:
-					#     /-a-|q1|
-					# |q0|--&-|q2| alfa has many transitions or alfa is EPSILON?
-					#     \-a-|q3|
-					if len(transitions) > 1 or key == Transition.EPSILON:
-						return False
+				transitions = self.get_adjacents(key, state)
+				#     /-a-|q1|
+				# |q0|--&-|q2| alfa has many transitions or alfa is EPSILON?
+				#     \-a-|q3|
+				if len(transitions) > 1 or transitions and key == Transition.EPSILON:
+					return False
 		return True
 
 class State:
 
-	def __init__(self, state_name):
-		self.name = state_name
-		self.description = ''
-
-	def __init__(self, state_name, state_description):
+	def __init__(self, state_name, state_description = ''):
 		self.name = state_name
 		self.description = state_description
 		
 class Transition:
 
 	EPSILON = '&'
-	
+
 	__metaclass__ = ABCMeta
 
-	def __init__(self, char):
-		self.from_ = None
-		self.to = None
+	def __init__(self, from_, to, char):
+		self.from_ = from_
+		self.to = to
 		self.char = char 
 
 	# Returns if transition rules are respected
