@@ -1,3 +1,5 @@
 /* Arquivo de CSS aplicado a todas as páginas. */
 
-/* Vazio. */
+svg.bi {
+    vertical-align: center;
+}

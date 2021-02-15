@@ -1,0 +1,190 @@
+{% from 'automata/controls.html' import controls %}
+{% from 'automata/constants.html' import constants %}
+{% from 'automata/modal.html' import node_modal, edge_modal %}
+
+{% macro automata(prefix_id='') %}
+    <div class="container">
+        <h2 class="text-center mt-5"> Edição de Autômatos Finitos </h2>
+        {{ controls(prefix_id=prefix_id)}}
+        <div id="{{prefix_id}}-automata-container" class="bg-light border border-dark" style="height: 50vh;"> </div>
+        {{ node_modal(prefix_id=prefix_id) }}
+        {{ edge_modal(prefix_id=prefix_id) }}
+        </div>
+    </div>
+
+    {{ constants(prefix_id=prefix_id) }}
+
+    <script type="text/javascript">
+        var global = {
+            network: null,
+            nodes: null,
+            edges: null,
+            initial_node: null,
+            final_nodes: [],
+            next_node_id: 0,
+        };
+
+        function toggle_edition_mode() {
+            $(BACK_BTN).toggleClass("d-none");
+            $(ADD_NODE_BTN).toggleClass("d-none");
+            $(ADD_EDGE_BTN).toggleClass("d-none");
+        }
+
+        $(ADD_NODE_BTN).click(() => {
+            toggle_edition_mode();        
+            global.network.addNodeMode();
+        });
+
+        $(ADD_EDGE_BTN).click(() => {
+            toggle_edition_mode();
+            global.network.addEdgeMode();
+        });
+
+        $(BACK_BTN).click(() => {
+            global.network.disableEditMode();
+            toggle_edition_mode();
+        });
+
+        $(REMOVE_BTN).click(() => {
+            global.network.deleteSelected();
+            $(REMOVE_BTN).addClass("d-none");
+        });
+
+        $(document).ready(() => {
+            init_automata($(CONTAINER).get(0));
+        });
+
+        function init_automata(container) {
+            global.nodes = new vis.DataSet([]);
+            global.edges = new vis.DataSet([]);
+
+            let options = {
+                nodes: {
+                    shape: "circle",
+                    widthConstraint: 50,
+                    borderWidth: 3,
+                    borderWidthSelected: 4,
+                },
+                edges:{
+                    arrows: "to",
+                    color: "#000000"
+                },
+                manipulation: {
+                    enabled: false,
+                    initiallyActive: true,
+                    addNode: add_node,
+                    addEdge: add_edge,
+                    editEdge: false,
+                },
+                physics: {
+                    enabled: false,
+                },
+            };
+
+            global.network = new vis.Network(container, {nodes: global.nodes, edges: global.edges}, options);
+            global.network.on("doubleClick", event => {
+                if (event.nodes.length > 0) {
+                    edit_node(global.nodes.get(event.nodes[0]), data => global.nodes.update(data));
+                } else if (event.edges.length > 0) {
+                    edit_edge(global.edges.get(event.edges[0]), data => global.edges.update(data));
+                }
+            });
+
+            global.network.on("select", event => {
+                if (event.nodes.length || event.edges.length)
+                    $(REMOVE_BTN).removeClass("d-none");
+                else 
+                    $(REMOVE_BTN).addClass("d-none");
+            });
+        }
+
+        function add_node(node_data, callback) {
+            node_data.id = global.next_node_id;
+            node_data.label = `q${global.next_node_id}`;
+            Object.assign(node_data, DEFAULT);
+            global.next_node_id++;
+            callback(node_data);
+            update_nodes();
+            toggle_edition_mode();
+        }
+
+        function edit_node(node_data, callback) {
+            delete node_data.x, node_data.y;
+            $(NODE_NAME).val(node_data.label);
+            $(NODE_INITIAL).prop("checked", global.initial_node == node_data.id);
+            $(NODE_FINAL).prop("checked", global.final_nodes.includes(node_data.id));
+            $(NODE_MODAL).one("click.edit", NODE_SAVE, () => {
+                node_data.label = $(NODE_NAME).val();
+                if ($(NODE_INITIAL).prop("checked")) {
+                    global.initial_node = node_data.id;
+                } else {
+                    if (global.initial_node == node_data.id)
+                        global.initial_node = null;
+                }
+                let index = global.final_nodes.findIndex(e => e == node_data.id);
+                if ($(NODE_FINAL).prop("checked")) {
+                    if (index < 0)
+                        global.final_nodes.push(node_data.id);
+                } else {
+                    if (index >= 0)
+                        global.final_nodes.splice(index, 1);
+                }
+                callback(node_data);
+                update_nodes();
+                $(NODE_MODAL).modal("hide");
+            });
+            $(NODE_MODAL).one("hidden.bs.modal.edit", () => $(NODE_MODAL).off(".edit"));
+            $(NODE_MODAL).modal("show");
+        }
+
+        function add_edge(edge_data, callback) {
+            let edges = global.edges.get({filter: e => e.from == edge_data.from && e.to == edge_data.to});
+            if (edges.length > 0) {
+                edit_edge(edges[0], (data) => {
+                    global.edges.update(data);
+                    global.network.disableEditMode();
+                    toggle_edition_mode();
+                });
+            } else {
+                edge_data.literals = [];
+                edge_data.smooth = {type: 'curvedCW', roundness: 0.2};
+                edit_edge(edge_data, (data) => {
+                    callback(data);
+                    toggle_edition_mode();
+                });
+            }
+        }
+
+        function edit_edge(edge_data, callback) {
+            populate_edge_modal(edge_data.literals);
+            $(EDGE_MODAL).one("click.edit", EDGE_SAVE, () => {
+                let literals = read_edge_modal();
+                if (literals.length == 0)
+                    literals = ['&'];
+                edge_data.literals = literals;
+                edge_data.label = literals.join('\n');
+                callback(edge_data);
+                $(EDGE_MODAL).modal("hide");
+            });
+            $(EDGE_MODAL).one("hidden.bs.modal.edit", () => $(EDGE_MODAL).off(".edit"));
+            $(EDGE_MODAL).modal("show");
+        }
+
+        function update_nodes() {
+            let group;
+            let ids = global.nodes.getIds();
+            for (id of ids) {
+                if (global.final_nodes.includes(id)) {
+                    if (global.initial_node == id) 
+                        group = BOTH;
+                    else 
+                        group = FINAL;
+                } else if (global.initial_node == id) 
+                    group = INITIAL;
+                else
+                    group = DEFAULT;
+                global.nodes.update({id: id, ...group});
+            }
+        }
+    </script>
+{% endmacro %}
