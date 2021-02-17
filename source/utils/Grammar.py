@@ -6,8 +6,7 @@ class Grammar:
         self.dictionary = {}
 
 
-    def parse_file(self, file_path):
-
+    def from_file(self, file_path):
         with open(file_path) as f:
             for line in f:
                 s = line.strip()
@@ -17,9 +16,6 @@ class Grammar:
                 value = split[1].split("|")
 
                 self.dictionary[key] = value
-
-    def to_json(self):
-        return json.dumps(self.dictionary, indent=2)
 
 
     def to_file(self, file_path):
@@ -35,6 +31,15 @@ class Grammar:
                 else:
                     write_string += " | " + value
             f.write(write_string + '\n')
+
+
+    def from_json(self, filepath):
+        self.dictionary = json.loads(filepath)
+
+
+    def to_json(self):
+        return json.dumps(self.dictionary, indent=2)
+
 
     def get_dictionary(self):
         return self.dictionary
