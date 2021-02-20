@@ -9,14 +9,30 @@
         <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
         <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-
     <body>
-        <header class="p-2 bg-dark text-white text-center">
-            <h3> {{ title }} </h3>
-        </header>
+        {% from 'menu/menu.html' import menu %}
+        {% from 'grammar/grammar.html' import grammar %}
         {% from 'automata/automata.html' import automata %}
-        {{ automata(prefix_id='1') }}
-        {% block content %} {% endblock %}
         {% from 'regex/regex.html' import regex %}
+        <div class="row no-gutters">
+            <div class="col-2">
+                {{ menu() }}
+            </div>
+            <div class="col-10">
+                <div class="tab-content mt-5">
+                    <div role="tabpanel" id="content-3" class="tab-pane fade"> 
+                        {{ regex(prefix_id="1") }}
+                    </div>
+                    <div role="tabpanel" id="content-2" class="tab-pane fade">
+                        {{ grammar(prefix_id="1") }}
+                    </div>
+                    <div role="tabpanel" id="content-1" class="tab-pane fade active show">
+                        {{ automata(prefix_id="1") }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+        </script> 
     </body>
 </html>

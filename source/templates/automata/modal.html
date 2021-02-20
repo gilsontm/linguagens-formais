@@ -62,7 +62,7 @@
         </div>
 
         <script type="text/javascript">
-            const TEMPLATE = 
+            const AUTOMATA_FORM_TEMPLATE = 
                 '<div class="input-group"> \
                     <input type="text" class="form-control" maxlength="1"/> \
                     <span class="btn input-group-addon {{prefix_id}}-edge-modal-remove"> \
@@ -80,11 +80,11 @@
            
 
             $(EDGE_MODAL_ADD).click(() => {
-                $(EDGE_MODAL_FORM).append(TEMPLATE);
-                set_remove_listener();
+                $(EDGE_MODAL_FORM).append(AUTOMATA_FORM_TEMPLATE);
+                set_automata_form_listener();
             });
 
-            function set_remove_listener() {
+            function set_automata_form_listener() {
                 $(EDGE_MODAL_REMOVE).click(event => {
                     $(event.target).closest(".input-group").remove();
                 });
@@ -99,8 +99,8 @@
                 clear_fields();
                 let i;
                 for (i = 0; i < literals.length - 1; i++)
-                    $(EDGE_MODAL_FORM).append(TEMPLATE);
-                set_remove_listener();
+                    $(EDGE_MODAL_FORM).append(AUTOMATA_FORM_TEMPLATE);
+                set_automata_form_listener();
                 let children = $(EDGE_MODAL_FORM).find("input");
                 for (i = 0; i < literals.length; i++)
                     $(children[i]).val(literals[i]);
