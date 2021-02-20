@@ -1,5 +1,5 @@
 {% macro form(prefix_id='', removable=true) %}
-    <div class="row no-gutters my-3 {{prefix_id}}-grammar-form">
+    <div class="row no-gutters mb-3 {{prefix_id}}-grammar-form">
         <div class="col-1">
             <div class="input-group"> 
                 <input type="text" class="form-control" {% if not removable %} value="S" disabled style="text-align: center;" {% endif %}/>

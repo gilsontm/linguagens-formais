@@ -10,35 +10,29 @@
         <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
         <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <body>
+        {% from 'menu/menu.html' import menu %}
         {% from 'grammar/grammar.html' import grammar %}
         {% from 'automata/automata.html' import automata %}
+
         <div class="row no-gutters">
-            <div class="col-1 vertical-menu bg-dark">
-                <!-- TODO -->
+            <div class="col-2">
+                {{ menu() }}
             </div>
-            <div class="col-11">
-                <div class="nav nav-tabs" role="tablist">
-                    <a data-toggle="tab" role="tab" class="nav-item nav-link active" href="#automata-display" >Autômatos</a>
-                    <a data-toggle="tab" role="tab" class="nav-item nav-link" href="#grammar-display"> Gramáticas </a>
-                    <a data-toggle="tab" role="tab" class="nav-item nav-link" href="#expression-display"> Expressões Regulares </a>
-                </div>
-                <div class="tab-content">
-                    <div class="tab-pane fade" role="tabpanel" id="grammar-display">
-                        {{ grammar(prefix_id="1") }}
-                    </div>
-                    <div class="tab-pane fade" role="tabpanel" id="expression-display"> 
+            <div class="col-10">
+                <div class="tab-content mt-5">
+                    <div role="tabpanel" id="content-3" class="tab-pane fade"> 
                         <!-- TODO  -->
                     </div>
-                    <div class="tab-pane fade active show" role="tabpanel" id="automata-display">
+                    <div role="tabpanel" id="content-2" class="tab-pane fade">
+                        {{ grammar(prefix_id="1") }}
+                    </div>
+                    <div role="tabpanel" id="content-1" class="tab-pane fade active show">
                         {{ automata(prefix_id="1") }}
                     </div>
                 </div>
             </div>
         </div>
         <script type="text/javascript">
-            const AUTOMATA_DISPLAY = "#automata-display";
-            const GRAMMAR_DISPLAY = "#grammar-display";
-            const EXPRESSION_DISPLAY = "#expression-display";
         </script> 
     </body>
 </html>
