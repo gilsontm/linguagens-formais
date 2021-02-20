@@ -1,0 +1,9 @@
+{% macro controls(prefix_id='') %}
+    <h2 class="text-center mt-5">
+        <textarea id="expwritter" contenteditable="true" class="expression_input"></textarea>
+        <button id="expupdate" class="update_button">Atualizar</button>
+        <div id="styledtext" class="expression_show position-relative top-50 start-50">
+            <span> Aqui mostra suas expressões</span>
+        </div>
+    </h2>
+{% endmacro %}

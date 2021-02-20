@@ -1,0 +1,20 @@
+{% macro constants(prefix_id='') %}
+<script type="text/javascript">
+    const INVALID = "INVALID";
+    const VALID = "VALID";
+
+    const VAR_CLASS = "var";
+    const OPER_CLASS = "oper";
+    const TXT_CLASS = "word";
+    const ASSIGN_CLASS = "assign";
+    const PAR_CLASS = "par";
+
+    const VAR = 0;
+    const ASSIGN_1 = 1;
+    const ASSIGN_2 = 2;
+    const OPER = 3;
+    const VAR_WORD = 4;
+    const FINISH_READ = 5;
+</script>
+
+{% endmacro %}

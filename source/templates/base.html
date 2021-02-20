@@ -15,8 +15,8 @@
             <h3> {{ title }} </h3>
         </header>
         {% from 'automata/automata.html' import automata %}
-
         {{ automata(prefix_id='1') }}
         {% block content %} {% endblock %}
+        {% from 'regex/regex.html' import regex %}
     </body>
 </html>
