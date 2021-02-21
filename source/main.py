@@ -1,9 +1,13 @@
 import os
 from flask import *
-from werkzeug.exceptions import HTTPException
+from models.grammar import Grammar
 
 app = Flask(__name__)
 app.config["FILES_FOLDER"] = os.path.join(os.path.dirname(__file__), "files")
+
+def get_file_path(filename):
+    path = os.path.join(app.config["FILES_FOLDER"], filename)
+    return path
 
 @app.route("/")
 def main():
@@ -11,8 +15,7 @@ def main():
 
 @app.route("/automata/import", methods=["POST"])
 def import_automata():
-    raise Exception()
-    path = save_file("upload.txt")
+    # path = save_file("upload.txt")
     # from_file
     # to_json
     json = {}
@@ -28,23 +31,25 @@ def export_automata():
 
 @app.route("/grammar/import", methods=["POST"])
 def import_grammar():
-    path = save_file("upload.txt")
-    # from_file
-    # to_json
-    json = {}
+    path = get_file_path("grammar_upload.txt")
+    file = request.files["file"]
+    file.save(path)
+    grammar = Grammar()
+    grammar.from_file(path)
+    json = grammar.to_json()
     return json
 
 @app.route("/grammar/export", methods=["POST"])
 def export_grammar():
-    json = request.get_json()
-    # from_json
-    # to_file -> path
-    path = ""
+    path = get_file_path("grammar.txt")
+    grammar = Grammar()
+    grammar.from_json(request.get_json())
+    grammar.to_file(path)
     return send_file(path, mimetype="text/plain")
 
 @app.route("/expression/import", methods=["POST"])
 def import_expression():
-    path = save_file("upload.txt")
+    # path = save_file("upload.txt")
     # from_file
     # to_json
     json = {}
@@ -57,10 +62,3 @@ def export_expression():
     # to_file -> path
     path = ""
     return send_file(path, mimetype="text/plain")
-
-def save_file(filename):
-    path = os.path.join(app.config["FILES_FOLDER"], filename)
-    file = request.files["file"]
-    file.save(path)
-    return path
-   

@@ -1,6 +1,3 @@
-import json
-
-
 class Grammar:
 
     def __init__(self):
@@ -18,24 +15,23 @@ class Grammar:
                 self.dictionary[key] = value
 
     def to_file(self, file_path):
-        f = open(file_path, "w")
+        with open(file_path, "w") as f: 
+            for key in self.dictionary:
+                write_string = key + " -> "
+                first = True
+                for value in self.dictionary[key]:
+                    if first:
+                        write_string += value
+                        first = False
+                    else:
+                        write_string += " | " + value
+                f.write(write_string + '\n')
 
-        for key in self.dictionary:
-            write_string = key + " -> "
-            first = True
-            for value in self.dictionary[key]:
-                if first:
-                    write_string += value
-                    first = False
-                else:
-                    write_string += " | " + value
-            f.write(write_string + '\n')
-
-    def from_json(self, filepath):
-        self.dictionary = json.loads(filepath)
+    def from_json(self, json):
+        self.dictionary = json
 
     def to_json(self):
-        return json.dumps(self.dictionary, indent=2)
+        return self.dictionary
 
     def get_dictionary(self):
         return self.dictionary
@@ -72,4 +68,4 @@ class Grammar:
         return self.dictionary[key]
 
     def add_key(self, key, values):
-        self.dictionary.Add(key, values)
+        self.dictionary[key] = values
