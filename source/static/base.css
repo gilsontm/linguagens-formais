@@ -4,6 +4,10 @@ svg.bi {
     vertical-align: center;
 }
 
+.h-50vh {
+    height: 50vh;
+}
+
 .vertical-menu {
     height: 100%;
     height: 100vh;

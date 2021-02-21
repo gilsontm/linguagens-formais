@@ -1,298 +1,83 @@
 {% macro regex(prefix_id='') %}
-    <h2 class="text-center mt-5">
-        <textarea id="expwritter" contenteditable="true" class="expression_input"></textarea>
-        <button id="expupdate" class="update_button">Atualizar</button>
-        <div id="styledtext" class="expression_show position-relative top-50 start-50">
-            <span> Aqui mostra suas expressões</span>
+    <div class="container">
+        <h2 class="text-center mt-5"> Edição de Expressões Regulares </h2>
+        <div class="row my-4">
+            <div class="col-6">
+                <h5 class="text-center"> Caixa de texto </h5>
+                <textarea id="{{prefix_id}}-input-regex" class="bg-light border w-100 h-50vh p-3" style="resize: none;"> </textarea>
+            </div>
+            <div class="col-6">
+                <h5 class="text-center"> Expressões interpretadas </h5>
+                <div id="{{prefix_id}}-styled-regex" class="bg-light border w-100 h-50vh p-3">
+                    <span> Suas expressões aparecerão aqui. </span>
+               </div>
+               <p id="{{prefix_id}}-validation-regex" class="float-right text-danger d-none"> Há alguma expressão incompleta ou inválida. </p>
+            </div>
         </div>
-    </h2>
-    <style>
-        .var {
-            color: orange;
+    </div>
+
+    <script>
+        const INPUT_REGEX = "#{{prefix_id}}-input-regex";
+        const STYLED_REGEX = "#{{prefix_id}}-styled-regex";
+        const VALIDATION_REGEX = "#{{prefix_id}}-validation-regex"
+
+        $(INPUT_REGEX).keyup(() => {
+            let text = $(INPUT_REGEX).val();
+            $(STYLED_REGEX).html(apply_color(text));
+            if (validate(text))
+                $(VALIDATION_REGEX).addClass("d-none");
+            else 
+                $(VALIDATION_REGEX).removeClass("d-none");
+        });
+
+        const REGEX_CLASSES = {
+            TEXT: e => `<span class="text-dark">${e}</span>`,
+            BREAK: "<br>",
+            ASSIGN: e => `<span class="text-primary">${e}</span>`,
+            OPERATOR: e => `<span class="text-danger">${e}</span>`,
+            VARIABLE: e => `<span class="text-warning">${e}</span>`,
+            PARENTHESIS: e => `<span class="text-success">${e}</span>`,
+        };
+        
+        function apply_color(text) {
+            let parsed = text;
+            parsed = parsed.replace(/(<-)/g, REGEX_CLASSES.ASSIGN);
+            parsed = parsed.replace(/^[a-z]*$/g, REGEX_CLASSES.TEXT);
+            parsed = parsed.replace(/[A-Z]/g, REGEX_CLASSES.VARIABLE);
+            parsed = parsed.replace(/(\(|\))/g, REGEX_CLASSES.PARENTHESIS);
+            parsed = parsed.replace(/(\r\n|\r|\n)/g, REGEX_CLASSES.BREAK);
+            parsed = parsed.replace(/(\+|\*|\.|\;)/g, REGEX_CLASSES.OPERATOR);
+            return parsed;
         }
 
-        .oper {
-            color: purple;
-        }
-
-        .par {
-            color: green;
-        }
-
-        .word {
-            color: black;
-        }
-
-        .assign {
-            color: blue;
-        }
-
-        .error_msg {
-            color: gray;
-            text-align: center;
-        }
-
-        .expression_show {
-            @extend .bg-light;
-            @extend .border;
-            @extend .border-dark;
-            width: 50vh;
-            height: 50vh;
-            max-width:250vh;
-            display: inline-block;
-            text-align: left;
-            position: fixed;
-        }
-
-        .expression_input {
-            text-align: left; 
-            height: 50vh;
-            resize: none;
-        }
-
-        .update_button {
-            text-align: center;
-        }
-    </style>
-    <script type="text/javascript">
-        function formatedSegment(segment, isFirst) {
-            if (!isFirst) {
-                segment = " " + segment;
+        function validate(text) {
+            let parsed = text;
+            parsed = parsed.replace(/ /g, "");
+            parsed = parsed.replace(/(<-)/g, "=");
+            parsed = parsed.replace(/[A-Z]/g, "A");
+            parsed = parsed.replace(/[a-z]/g, "a");
+            parsed = parsed.replace(/a+/g, "a");
+            parsed = parsed.replace(/(\+|\*|\.)/g, "*");
+            let lines = parsed.split("\n");
+            lines = lines.filter(e => e);
+            for (i in lines) {
+                if (lines[i].length < 4)
+                    return false;
+                if (!lines[i].startsWith("A=") || !lines[i].endsWith(";"))
+                    return false;
+                lines[i] = lines[i].substring(2, lines[i].length - 1);
             }
-            return segment;
-        }
-
-        function formatedJson(constant, expression, isFirst) {
-            json = "";
-            if (!isFirst) {
-                json = ",\n";
+            let length;
+            for (line of lines) {
+                do {
+                    length = line.length;
+                    line = line.replace(/a\*a/g, "a");
+                    line = line.replace(/\(a\)/g, "a");
+                } while (length > line.length);
+                if (line != "a") 
+                    return false;
             }
-            json = constant + ": " + expression;
-            return json;
+            return true;
         }
-
-        function htmlSegmentWithClass(segment, class_, isFirst) {
-            segment = formatedSegment(segment, isFirst);
-            return "<span class=" + class_ + ">" + segment + "</span>";
-        }
-
-        function isLetter(char) {
-            const a = 'a'.codePointAt(0)
-            const z = 'z'.codePointAt(0)
-            value = char.codePointAt(0);
-            return value >= a && value <= z;
-        }
-
-        function isCaptalLetter(char) {
-            const A = 'A'.codePointAt(0)
-            const Z = 'Z'.codePointAt(0)
-            value = char.codePointAt(0);
-            return value >= A && value <= Z;
-        }
-
-        const INVALID = "INVALID";
-        const VALID = "VALID";
-
-        function evalText(text) {
-            const VAR_CLASS = "var";
-            const OPER_CLASS = "oper";
-            const TXT_CLASS = "word";
-            const ASSIGN_CLASS = "assign";
-            const PAR_CLASS = "par";
-
-            const VAR = 0;
-            const ASSIGN_1 = 1;
-            const ASSIGN_2 = 2;
-            const OPER = 3;
-            const VAR_WORD = 4;
-            const FINISH_READ = 5;
-
-            var openPar = 0;
-
-            var state = VAR;
-            var separators = [' ', '\n'];
-            var operators = ['+', '*', '.', ';', ')'];
-
-            var htmlText = "";
-            var constant = "";
-            var expression = "";
-            var jsonString = "expressions : [";
-
-            var isFirstHtml = true;
-            var isFirst = true;
-            var isFirstJson = false;
-
-            var expCounter = 0;
-            var stringBuilder;
-
-            for (var i = 0; i < text.length; i++) {
-                c = text.charAt(i);
-                skip = separators.indexOf(c) > -1 && (state != FINISH_READ);
-                if (skip) {
-                    continue;
-                }
-
-                if (state == VAR) {
-                    if (isCaptalLetter(c)) {
-                        // write var
-                        expCounter += 1;
-                        htmlText += htmlSegmentWithClass(expCounter + ". ", TXT_CLASS, isFirstHtml);
-                        isFirstHtml = false;
-                        htmlText += htmlSegmentWithClass(c, VAR_CLASS, isFirstHtml);
-                        // define constant
-                        constant = formatedSegment(c, isFirst);
-                        isFirst = false;
-
-                        state = ASSIGN_1;
-                    } else {
-                        return INVALID;
-                    }
-                } else if (state == ASSIGN_1) {
-                    if (c != '<') {
-                        return INVALID;
-                    }
-                    state = ASSIGN_2;
-                } else if (state == ASSIGN_2) {
-                    if (c == '-') {
-                        // write assign
-                        htmlText += htmlSegmentWithClass("<-", ASSIGN_CLASS, isFirstHtml);
-                        // reset to read expression
-                        isFirst = true;
-                    } else {
-                        return INVALID;
-                    }
-                    state = VAR_WORD;
-                } else if (state == OPER) {
-                    var isOperator = operators.indexOf(c) > -1;
-                    if (!isOperator) {
-                        return INVALID;
-                    }
-                    
-                    if (c == ')') {
-                        if (openPar == 0) {
-                            return INVALID;
-                        }
-                        openPar -= 1;
-                        // write html
-                        htmlText += htmlSegmentWithClass(c, PAR_CLASS, true);
-                        isFirstHtml = false;
-
-                        // write expression
-                        expression += formatedSegment(c, true);
-                        isFirst = false;
-
-                        state = OPER;
-                    } else if (c == '*') {
-                        // write html
-                        htmlText += htmlSegmentWithClass(c, OPER_CLASS, true);
-                        isFirstHtml = false;
-
-                        // write expression
-                        expression += formatedSegment(c, true);
-                        isFirst = false;
-
-                        state = OPER;
-                    } else if (c == ';') {
-                        if (openPar != 0) {
-                            return INVALID;
-                        }
-
-                        // write html
-                        htmlText += htmlSegmentWithClass(c + "<br/>", OPER_CLASS, isFirstHtml);
-                        isFirstHtml = false;
-
-                        // write into json
-                        jsonString += formatedJson(constant, expression, isFirstJson);
-                        isFirstJson = false;
-
-                        constant = "";
-                        expression = "";
-                        isFirst = true;
-
-                        state = VAR;
-                    } else {
-                        // write html
-                        htmlText += htmlSegmentWithClass(c, OPER_CLASS, isFirstHtml);
-                        isFirstHtml = false;
-
-                        // write expression
-                        expression += formatedSegment(c, isFirst);
-                        isFirst = false;
-
-                        state = VAR_WORD;
-                    }
-                } else if (state == VAR_WORD) {
-                    if (isLetter(c)) {
-                        stringBuilder = c;
-                        state = FINISH_READ;
-                    } else if (isCaptalLetter(c)) {
-                        // write html
-                        htmlText += htmlSegmentWithClass(c, VAR_CLASS, isFirstHtml);
-                        isFirstHtml = false;
-
-                        // write expression
-                        expression += formatedSegment(c, isFirst);
-                        isFirst = false;
-
-                        state = OPER;
-                    } else if (c == '(') {
-                        openPar += 1;
-
-                        // write html
-                        htmlText += htmlSegmentWithClass(c, PAR_CLASS, isFirstHtml);
-                        isFirstHtml = false;
-
-                        // write expression
-                        expression += formatedSegment(c, isFirst);
-                        isFirst = false;
-
-                        state = VAR_WORD;
-                    } else {
-                        return INVALID;
-                    }
-                } else if (state == FINISH_READ) {
-                    var isSeparator = separators.indexOf(c) > -1;
-                    var isOperator = operators.indexOf(c) > -1;
-                    if (isSeparator || isOperator) {
-                        // write content in stringBuilder
-                        htmlText += htmlSegmentWithClass(stringBuilder, TXT_CLASS, isFirstHtml);
-                        isFirstHtml = false;
-
-                        // write expression
-                        expression += formatedSegment(stringBuilder, isFirst);
-                        isFirst = false;
-
-                        if (isOperator) {
-                            i--;
-                        }
-
-                        state = OPER;
-                    } else if (isLetter(c)) {
-                        stringBuilder += c;
-                    } else {
-                        return INVALID;
-                    }
-                }
-            }
-            if (state != VAR) {
-                return INVALID;
-            }
-            jsonString += formatedSegment("]", false);
-            div = document.getElementById("styledtext");
-            div.innerHTML = htmlText;
-
-            return VALID;
-            //TODO What to do with json?
-        }
-
-        //Update button listener
-        document.getElementById("expupdate").addEventListener("click", function() {
-          var textarea = document.getElementById("expwritter");
-          var text = textarea.value
-          if (evalText(text) != VALID) {
-            div = document.getElementById("styledtext");
-            div.innerHTML = htmlSegmentWithClass("alguma expressão está inválida", "error_msg", true);
-          }
-        }); 
     </script>
 {% endmacro %}
