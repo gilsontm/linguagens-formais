@@ -57,7 +57,7 @@
             parsed = parsed.replace(/[A-Z]/g, "A");
             parsed = parsed.replace(/[a-z]/g, "a");
             parsed = parsed.replace(/a+/g, "a");
-            parsed = parsed.replace(/(\+|\*|\.)/g, "*");
+            parsed = parsed.replace(/(\+|\.)/g, "+");
             let lines = parsed.split("\n");
             lines = lines.filter(e => e);
             for (i in lines) {
@@ -66,13 +66,15 @@
                 if (!lines[i].startsWith("A=") || !lines[i].endsWith(";"))
                     return false;
                 lines[i] = lines[i].substring(2, lines[i].length - 1);
+                lines[i] = lines[i].replace(/[A-Z]/g, "a");
             }
             let length;
             for (line of lines) {
                 do {
                     length = line.length;
-                    line = line.replace(/a\*a/g, "a");
-                    line = line.replace(/\(a\)/g, "a");
+                    line = line.replace(/a\+a/g, "a");  //  a+a --> a
+                    line = line.replace(/\(a\)/g, "a"); //  (a) --> a
+                    line = line.replace(/a\*/g, "a");   //   a* --> a
                 } while (length > line.length);
                 if (line != "a") 
                     return false;
