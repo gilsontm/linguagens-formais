@@ -110,8 +110,8 @@
         });
 
         $("#export-3").click(() => {
-            // TODO
-            // Exportar expressão regular
+            let data = export_regex();
+            post_export("/regex/export", JSON.stringify(data), "regex.txt")
         });
 
         function post_import(url, data, success) {
