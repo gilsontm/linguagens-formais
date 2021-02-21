@@ -82,6 +82,11 @@
             return true;
         }
 
+        function export_regex() {
+            let text = $(INPUT_REGEX).val();
+            return formatJson(text);
+        }
+
         function formatJson(text) {
             var json = "{\n\t\"expressions\" : {"
             text = text.replaceAll('\n', '');
