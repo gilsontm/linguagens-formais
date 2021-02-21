@@ -23,6 +23,13 @@
             initial_node: null,
             final_nodes: [],
             next_node_id: 0,
+
+            curr_step: 0,
+            curr_state: 0,
+            word: null,
+            level: null
+            level_count = 1;
+
         };
 
         function toggle_edition_mode() {
@@ -35,7 +42,6 @@
             toggle_edition_mode();        
             global.network.addNodeMode();
         });
-
         $(ADD_EDGE_BTN).click(() => {
             toggle_edition_mode();
             global.network.addEdgeMode();
@@ -51,6 +57,19 @@
             $(REMOVE_BTN).addClass("d-none");
         });
 
+
+
+        $(STEP_BTN).click(() => {
+            next_step()
+        });
+
+        $(RESET_BTN).click(() => {
+            reset_automata_state()
+        });
+
+        $(WORD_FIELD).on('input', () => {
+            reset_automata_state()
+        });
         $(document).ready(() => {
             init_automata($(CONTAINER).get(0));
         });
@@ -104,6 +123,54 @@
                 global.options.physics.enabled = false;
                 global.network.setOptions(global.options);
             });
+        }
+
+        function reset_automata_state(){
+            global.curr_step = 0;
+            global.curr_state = 0;
+            global.word = $(WORD_FIELD).val();
+            $(TAIL_FIELD).val($(WORD_FIELD).val());
+            global.level_count = 1;
+            global.level = {0:{"processing": true, "accepted": false, , "curr_state": -1, "next_states": []}};
+
+        }
+
+        function update_tail(){
+            $(TAIL_FIELD).val(global.word.substring(global.curr_step, global.word.length));
+        }
+
+        function next_step(){
+           Object.keys(global.level).forEach(function(branch){
+                global.word = $(WORD_FIELD).val()
+                send = {
+                    branch: branch, 
+                    word:global.word, 
+                    step:global.curr_step, 
+                    curr_state:global.curr_state, 
+                    automata: export_automata()
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/automata/step',
+                    data: JSON.stringify(send),
+                    dataType: 'json',
+                    processData: false,
+                    contentType: 'application/json; charset=utf-8',
+                    success: function(data) { 
+                        console.log(data)
+                        if(data.processing){
+                            global.curr_state = data.id;
+                            global.curr_step++;
+                            update_tail();
+                        } else if(data.accepted) {
+                            $(TAIL_FIELD).val("Accepted");
+                        } else {
+                            console.log(branch+" rejected");
+                        }
+                    },
+                });
+           });
         }
 
         function add_node(node_data, callback) {

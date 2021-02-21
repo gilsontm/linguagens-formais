@@ -2,8 +2,13 @@ import os
 from flask import *
 from werkzeug.exceptions import HTTPException
 
+import requests
+
 app = Flask(__name__)
+from .finiteAutomata import FiniteAutomata
 app.config["FILES_FOLDER"] = os.path.join(os.path.dirname(__file__), "files")
+
+
 
 @app.route("/")
 def main():
@@ -25,6 +30,17 @@ def export_automata():
     # to_file -> path
     path = ""
     return send_file(path, mimetype="text/plain")
+
+@app.route("/automata/step", methods=["POST"])
+def step_automata():
+    json = request.get_json()
+    automata = FiniteAutomata()
+    automata.from_json(json['automata'])
+    automata.set_word(json['word'])
+    automata.set_step(json['step'])
+    automata.set_state(json['curr_state'])
+    return (automata.step_forward(json['branch_id']))
+
 
 @app.route("/grammar/import", methods=["POST"])
 def import_grammar():

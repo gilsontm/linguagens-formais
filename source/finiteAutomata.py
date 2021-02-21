@@ -140,3 +140,32 @@ class FiniteAutomata:
             self.curr_state_id = state_id
         else:
             self.curr_state_id = self.initial_id
+
+    #set processing step
+    """def fast_run(self):
+        result = None
+        while (true):
+            result = json.loads(self.step_forward())
+            if (result["processing"] != "true"):
+                break
+        return result"""
+
+    #step forward once processing word
+    def step_forward(self, branch_id):
+        if (not self.valid()):
+            return {"processing":False, "accepted": False, "branch_id":branch_id}
+
+        if (len(self.word) == self.step):
+            if (self.curr_state_id in self.final_ids):
+                return {"processing":False, "accepted": True, "branch_id":branch_id}
+            return {"processing":False, "accepted": False, "branch_id":branch_id}
+
+        state = self.states[self.curr_state_id]
+        curr_symbol = self.word[self.step]
+        next_states = state.transition.get(curr_symbol)
+
+        if (next_states == None and len(next_states)>0):
+            return {"processing":False, "accepted": False, "branch_id":branch_id, "curr_state": self.curr_state_id, "next_states":next_states}
+
+        return {"processing":True, "accepted": False, "branch_id":branch_id, "curr_state": self.curr_state_id, "next_states":next_states}
+
