@@ -111,7 +111,7 @@
 
         $("#export-3").click(() => {
             let data = export_regex();
-            post_export("/regex/export", JSON.stringify(data), "regex.txt")
+            post_export("/regex/export", JSON.stringify(data), "regex.xml", "application/xml")
         });
 
         function post_import(url, data, success) {
@@ -126,19 +126,19 @@
             });
         }
 
-        function post_export(url, data, filename) {
+        function post_export(url, data, filename, type) {
             $.ajax({
                 type: "POST",
                 url: url,
                 data: data,
-                success: res => download(res, filename),
+                success: res => download(res, filename, (type ? type : "text/plain")),
                 error: res => show_error(res),
                 contentType: "application/json",
             });
         }
 
-        function download(data, filename) {
-            let blob = new Blob([data], {type: "text/plain"});
+        function download(data, filename, type) {
+            let blob = new Blob([data], {type: type});
             let link = $(DOWNLOAD_LINK).get(0);
             link.download = filename;
             link.href = window.URL.createObjectURL(blob);

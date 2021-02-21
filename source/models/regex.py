@@ -4,7 +4,8 @@ import xml.etree.ElementTree as ET
 from xml.dom.minidom import parseString
 import json
 
-def from_file(data):
+def from_file(path):
+	data = open(path, "r").read()
 	xml = minidom.parseString(data)
 	expression_node = xml.getElementsByTagName('expression')[0];
 	expression = expression_node.childNodes[0].nodeValue;
@@ -39,7 +40,7 @@ class Regex:
 			pass
 		self.unsolved_dependencies[var].remove(dep)
 
-	def to_file(self):
+	def to_file(self, path):
 		exp_var = self.main_exp
 		exp_str = self.get_expression_str(exp_var)
 		dependencies = self.get_dependencies(exp_var)
@@ -52,7 +53,8 @@ class Regex:
 		expression = ET.SubElement(structure, 'expression')
 		expression.text = exp_str
 		xmlstr = ET.tostring(structure, encoding='unicode', method='xml')
-		return xmlstr
+		with open(path, "w") as f:
+			f.write(xmlstr)
 
 	def get_dependencies(self, var):
 		if var in self.dependencies:

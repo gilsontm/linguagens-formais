@@ -1,6 +1,9 @@
 import os
 from flask import *
+
+from models import regex
 from models.grammar import Grammar
+from models.finite_automata import FiniteAutomata
 
 app = Flask(__name__)
 app.config["FILES_FOLDER"] = os.path.join(os.path.dirname(__file__), "files")
@@ -15,18 +18,20 @@ def main():
 
 @app.route("/automata/import", methods=["POST"])
 def import_automata():
-    # path = save_file("upload.txt")
-    # from_file
-    # to_json
-    json = {}
+    path = get_file_path("automata_upload.txt")
+    file = request.files["file"]
+    file.save(path)
+    automata = FiniteAutomata()
+    automata.from_file(path)
+    json = automata.to_json()
     return json
 
 @app.route("/automata/export", methods=["POST"])
 def export_automata():
-    json = request.get_json()
-    # from_json
-    # to_file -> path
-    path = ""
+    path = get_file_path("automata.txt")
+    automata = FiniteAutomata()
+    automata.from_json(request.get_json())
+    automata.to_file(path)
     return send_file(path, mimetype="text/plain")
 
 @app.route("/grammar/import", methods=["POST"])
@@ -47,18 +52,18 @@ def export_grammar():
     grammar.to_file(path)
     return send_file(path, mimetype="text/plain")
 
-@app.route("/expression/import", methods=["POST"])
-def import_expression():
-    # path = save_file("upload.txt")
-    # from_file
-    # to_json
-    json = {}
+@app.route("/regex/import", methods=["POST"])
+def import_regex():
+    path = get_file_path("regex_upload.xml")
+    file = request.files["file"]
+    file.save(path)
+    expression = regex.from_file(path)
+    json = expression.to_json()
     return json
 
-@app.route("/expression/export", methods=["POST"])
-def export_expression():
-    json = request.get_json()
-    # from_json
-    # to_file -> path
-    path = ""
-    return send_file(path, mimetype="text/plain")
+@app.route("/regex/export", methods=["POST"])
+def export_regex():
+    path = get_file_path("regex.xml")
+    expression = regex.from_json(request.get_json())
+    expression.to_file(path)
+    return send_file(path, mimetype="application/xml")
