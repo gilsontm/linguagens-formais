@@ -1,3 +1,18 @@
 /* Arquivo de CSS aplicado a todas as páginas. */
 
-/* Vazio. */
+svg.bi {
+    vertical-align: center;
+}
+
+.h-50vh {
+    height: 50vh;
+}
+
+.vertical-menu {
+    height: 100%;
+    height: 100vh;
+}
+
+.custom-file-input ~ .custom-file-label::after {
+    content: "Buscar";
+}

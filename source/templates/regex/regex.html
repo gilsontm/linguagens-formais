@@ -1,0 +1,85 @@
+{% macro regex(prefix_id='') %}
+    <div class="container">
+        <h2 class="text-center mt-5"> Edição de Expressões Regulares </h2>
+        <div class="row my-4">
+            <div class="col-6">
+                <h5 class="text-center"> Caixa de texto </h5>
+                <textarea id="{{prefix_id}}-input-regex" class="bg-light border w-100 h-50vh p-3" style="resize: none;"> </textarea>
+            </div>
+            <div class="col-6">
+                <h5 class="text-center"> Expressões interpretadas </h5>
+                <div id="{{prefix_id}}-styled-regex" class="bg-light border w-100 h-50vh p-3">
+                    <span> Suas expressões aparecerão aqui. </span>
+               </div>
+               <p id="{{prefix_id}}-validation-regex" class="float-right text-danger d-none"> Há alguma expressão incompleta ou inválida. </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const INPUT_REGEX = "#{{prefix_id}}-input-regex";
+        const STYLED_REGEX = "#{{prefix_id}}-styled-regex";
+        const VALIDATION_REGEX = "#{{prefix_id}}-validation-regex"
+
+        $(INPUT_REGEX).keyup(() => {
+            let text = $(INPUT_REGEX).val();
+            $(STYLED_REGEX).html(apply_color(text));
+            if (validate(text))
+                $(VALIDATION_REGEX).addClass("d-none");
+            else 
+                $(VALIDATION_REGEX).removeClass("d-none");
+        });
+
+        const REGEX_CLASSES = {
+            TEXT: e => `<span class="text-dark">${e}</span>`,
+            BREAK: "<br>",
+            ASSIGN: e => `<span class="text-primary">${e}</span>`,
+            OPERATOR: e => `<span class="text-danger">${e}</span>`,
+            VARIABLE: e => `<span class="text-warning">${e}</span>`,
+            PARENTHESIS: e => `<span class="text-success">${e}</span>`,
+        };
+        
+        function apply_color(text) {
+            let parsed = text;
+            parsed = parsed.replace(/(<-)/g, REGEX_CLASSES.ASSIGN);
+            parsed = parsed.replace(/^[a-z]*$/g, REGEX_CLASSES.TEXT);
+            parsed = parsed.replace(/[A-Z]/g, REGEX_CLASSES.VARIABLE);
+            parsed = parsed.replace(/(\(|\))/g, REGEX_CLASSES.PARENTHESIS);
+            parsed = parsed.replace(/(\r\n|\r|\n)/g, REGEX_CLASSES.BREAK);
+            parsed = parsed.replace(/(\+|\*|\.|\;)/g, REGEX_CLASSES.OPERATOR);
+            return parsed;
+        }
+
+        function validate(text) {
+            let parsed = text;
+            parsed = parsed.replace(/ /g, "");
+            parsed = parsed.replace(/(<-)/g, "=");
+            parsed = parsed.replace(/[A-Z]/g, "A");
+            parsed = parsed.replace(/[a-z]/g, "a");
+            parsed = parsed.replace(/a+/g, "a");
+            parsed = parsed.replace(/(\+|\.)/g, "+");
+            let lines = parsed.split("\n");
+            lines = lines.filter(e => e);
+            for (i in lines) {
+                if (lines[i].length < 4)
+                    return false;
+                if (!lines[i].startsWith("A=") || !lines[i].endsWith(";"))
+                    return false;
+                lines[i] = lines[i].substring(2, lines[i].length - 1);
+                lines[i] = lines[i].replace(/[A-Z]/g, "a");
+            }
+            let length;
+            for (line of lines) {
+                do {
+                    length = line.length;
+                    line = line.replace(/a\+a/g, "a");  //  a+a --> a
+                    line = line.replace(/\(a\)/g, "a"); //  (a) --> a
+                    line = line.replace(/a\*/g, "a");   //   a* --> a
+                } while (length > line.length);
+                if (line != "a") 
+                    return false;
+            }
+            return true;
+        }
+    </script>
+{% endmacro %}

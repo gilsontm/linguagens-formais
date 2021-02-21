@@ -1,0 +1,102 @@
+{% from 'modal/modal.html' import base_modal %}
+
+{% macro node_modal(prefix_id='') %}
+    {% call base_modal(prefix_id=(prefix_id + '-node'), title='Editar estado') %}
+        <div class="form-group row">
+            <label class="col-4 col-form-label"> Nome </label>
+            <div class="col-8">
+                <input id="{{prefix_id}}-node-modal-name" type="text" class="form-control" maxlength="20">
+            </div>
+        </div>
+        <div class="form-group row">
+            <label class="col-4 col-form-label pt-0"> Propriedades </label>
+            <div class="col-8">
+                <div class="form-check">
+                    <input id="{{prefix_id}}-node-modal-initial"class="form-check-input" type="checkbox" value="false">
+                    <label class="form-check-label"> Estado inicial </label>
+                </div>
+                <div class="form-check">
+                    <input id="{{prefix_id}}-node-modal-final" class="form-check-input" type="checkbox" value="false">
+                    <label class="form-check-label"> Estado final </label>
+                </div>
+            </div>
+        </div>
+    {% endcall %}
+{% endmacro %}
+
+{% macro edge_modal(prefix_id='') %}
+    {% call base_modal(prefix_id=(prefix_id + '-edge'), title='Editar transição') %}
+        <div class="form-group row">
+            <label for="edge-modal-input" class="col-sm-4 col-form-label"> Símbolos </label>
+            <div id="{{prefix_id}}-edge-modal-form" class="col-sm-8">
+                <div class="input-group">
+                    <input id="{{prefix_id}}-edge-modal-first" type="text" class="form-control" maxlength="1"/>
+                    <span id="{{prefix_id}}-edge-modal-add" class="btn input-group-addon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 20 20">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                        </svg>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            const AUTOMATA_FORM_TEMPLATE = 
+                '<div class="input-group"> \
+                    <input type="text" class="form-control" maxlength="1"/> \
+                    <span class="btn input-group-addon {{prefix_id}}-edge-modal-remove"> \
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 20 20"> \
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/> \
+                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/> \
+                        </svg> \
+                    </span> \
+                </div>';
+            
+            const EDGE_MODAL_ADD = "#{{prefix_id}}-edge-modal-add";
+            const EDGE_MODAL_FORM = "#{{prefix_id}}-edge-modal-form";
+            const EDGE_MODAL_FIRST = "#{{prefix_id}}-edge-modal-first";
+            const EDGE_MODAL_REMOVE = ".{{prefix_id}}-edge-modal-remove";
+           
+
+            $(EDGE_MODAL_ADD).click(() => {
+                $(EDGE_MODAL_FORM).append(AUTOMATA_FORM_TEMPLATE);
+                set_automata_form_listener();
+            });
+
+            function set_automata_form_listener() {
+                $(EDGE_MODAL_REMOVE).click(event => {
+                    $(event.target).closest(".input-group").remove();
+                });
+            }
+
+            function clear_fields() {
+                $(EDGE_MODAL_FIRST).val("");
+                $(EDGE_MODAL_REMOVE).closest(".input-group").remove();
+            }
+
+            function populate_edge_modal(literals) {
+                clear_fields();
+                let i;
+                for (i = 0; i < literals.length - 1; i++)
+                    $(EDGE_MODAL_FORM).append(AUTOMATA_FORM_TEMPLATE);
+                set_automata_form_listener();
+                let children = $(EDGE_MODAL_FORM).find("input");
+                for (i = 0; i < literals.length; i++)
+                    $(children[i]).val(literals[i]);
+            }
+
+            function read_edge_modal() {
+                let literals = [];
+                let children = $(EDGE_MODAL_FORM).find("input");
+                let value;
+                for (child of children) {
+                    value = $(child).val();
+                    if (value && !literals.includes(value))
+                        literals.push(value);
+                }
+                return literals;
+            }
+        </script>
+    {% endcall %}
+{% endmacro %}

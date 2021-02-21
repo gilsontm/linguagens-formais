@@ -1,0 +1,37 @@
+{% from 'modal/modal.html' import base_modal %}
+
+{% macro import_modal(prefix_id='') %}
+    {% call base_modal(prefix_id=(prefix_id + '-import'), title='Importar arquivo') %}
+        <div class="form-group row">
+            <label class="col-4 col-form-label"> Arquivo </label>
+            <div class="col-8">
+                <div class="custom-file">
+                    <input id="{{prefix_id}}-import-modal-file" type="file" class="custom-file-input">
+                    <label class="custom-file-label" for="{{prefix_id}}-import-modal-file"> </label>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            const IMPORT_MODAL = "#{{prefix_id}}-import-modal";
+            const IMPORT_MODAL_FILE = "#{{prefix_id}}-import-modal-file";
+            const IMPORT_MODAL_SAVE = "#{{prefix_id}}-import-modal-save"; 
+
+            $(IMPORT_MODAL_FILE).change(event => {
+                $(IMPORT_MODAL_FILE).next().html($(IMPORT_MODAL_FILE).prop("files")[0].name);
+            });
+
+            function show_import_modal(callback) {
+                $(IMPORT_MODAL_FILE).next().html("Escolha o arquivo...");
+                $(IMPORT_MODAL).one("click.import", IMPORT_MODAL_SAVE, () => {
+                    let form = new FormData();
+                    form.append("file", $(IMPORT_MODAL_FILE).prop("files")[0]);
+                    callback(form);
+                    $(IMPORT_MODAL).modal("hide");
+                });
+                $(IMPORT_MODAL).one("hidden.bs.modal.import", () => $(IMPORT_MODAL).off(".import"));
+                $(IMPORT_MODAL).modal("show");
+            }
+        </script>
+    {% endcall %}
+{% endmacro %}

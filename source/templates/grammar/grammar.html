@@ -1,0 +1,95 @@
+{% from 'grammar/form.html' import form %}
+
+{% macro grammar(prefix_id='') %}
+    <div class="container">
+        <h2 class="text-center mt-5"> Edição de Gramáticas </h2>
+        <div class="my-3"> 
+            <button id="{{prefix_id}}-add-sentence" class="btn btn-success mr-1"> 
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 20 20">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                </svg>
+                Sentença
+            </button>
+            <button id="{{prefix_id}}-clear-sentences" class="btn btn-danger mr-1"> 
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-x-circle" viewBox="0 0 20 20"> \
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/> \
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/> \
+                </svg>
+                Limpar
+            </button>
+        </div>
+        <div id="{{prefix_id}}-grammar-container">
+            {{ form(prefix_id=prefix_id, removable=false) }}
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        const GRAMMAR_FORM_TEMPLATE = `{{ form(prefix_id=prefix_id) }}`;
+        const GRAMMAR_FORM = ".{{prefix_id}}-grammar-form";
+        const GRAMMAR_CONTAINER = "#{{prefix_id}}-grammar-container";
+        const ADD_SENTENCE = "#{{prefix_id}}-add-sentence";
+        const REMOVE_SENTENCE = ".{{prefix_id}}-remove-sentence";
+        const CLEAR_SENTENCES = "#{{prefix_id}}-clear-sentences";
+
+        $(ADD_SENTENCE).click(() => {
+            $(GRAMMAR_CONTAINER).append(GRAMMAR_FORM_TEMPLATE);
+            set_grammar_form_listener();
+        });
+
+        $(CLEAR_SENTENCES).click(clear_grammar_form);
+
+        function set_grammar_form_listener() {
+            $(REMOVE_SENTENCE).click(event => {
+                $(event.target).closest(GRAMMAR_FORM).remove();
+            });
+        }
+
+        function clear_grammar_form() {
+            $(REMOVE_SENTENCE).closest(GRAMMAR_FORM).remove();
+            $(`${GRAMMAR_FORM} input[type=text]:enabled`).val("");
+        }
+
+        function import_grammar(grammar) {
+            clear_grammar_form();
+            let fields;
+            for (key in grammar) {
+                if (key == 'S') {
+                    fields = $(`${GRAMMAR_CONTAINER} ${GRAMMAR_FORM}:first-child input[type=text]:enabled`);
+                } else {
+                    $(GRAMMAR_CONTAINER).append(GRAMMAR_FORM_TEMPLATE);
+                    set_grammar_form_listener();
+                    fields = $(`${GRAMMAR_CONTAINER} ${GRAMMAR_FORM}:last-child input[type=text]`);
+                    $(fields[0]).val(key);
+                    fields = fields.slice(1);
+                }
+                for (let i = 0; i < grammar[key].length; i++)
+                    $(fields[i]).val(grammar[key][i]);
+            }
+        }
+
+        function export_grammar() {
+            let value;
+            let inputs;
+            let grammar = {};
+            let rows = $(GRAMMAR_CONTAINER).find(GRAMMAR_FORM);
+            for (row of rows) {
+                inputs = $(row).find("input[type=text]");
+                first = $(inputs[0]).val();
+                grammar[first] = [];
+                inputs = inputs.slice(1);
+                for (input of inputs) {
+                    value = $(input).val();
+                    if (value && !(value in grammar[first]))
+                        grammar[first].push(value);
+                }
+            }
+            return grammar;
+        }
+
+        $(document).ready(() => {
+            set_grammar_form_listener();
+        });
+    </script>
+
+{% endmacro %}

@@ -1,0 +1,88 @@
+{% macro constants(prefix_id='') %}
+<script type="text/javascript">
+    // network container
+    const CONTAINER = "#{{prefix_id}}-automata-container";
+
+    // node modal
+    const NODE_MODAL = "#{{prefix_id}}-node-modal";
+    const NODE_SAVE = "#{{prefix_id}}-node-modal-save";
+    const NODE_NAME = "#{{prefix_id}}-node-modal-name";
+    const NODE_INITIAL = "#{{prefix_id}}-node-modal-initial";
+    const NODE_FINAL = "#{{prefix_id}}-node-modal-final";
+
+    // edge modal
+    const EDGE_MODAL = "#{{prefix_id}}-edge-modal";
+    const EDGE_SAVE = "#{{prefix_id}}-edge-modal-save";
+    const EDGE_INPUT = "#{{prefix_id}}-edge-modal-input";
+
+    // controls
+    const BACK_BTN = "#{{prefix_id}}-back"
+    const REMOVE_BTN = "#{{prefix_id}}-remove"
+    const ADD_NODE_BTN = "#{{prefix_id}}-add-node"
+    const ADD_EDGE_BTN = "#{{prefix_id}}-add-edge"
+
+    // colors
+    const DEFAULT_COLOR_1 = "#2b7ce9";
+    const DEFAULT_COLOR_2 = "#d2e5ff";
+    const ALTERNATE_COLOR_1 = "#ff8c00";
+    const ALTERNATE_COLOR_2 = "#f2c89b";
+    
+    // states
+    const DEFAULT = {
+        shapeProperties : {
+            borderDashes: false,
+        },
+        color: {
+            border: DEFAULT_COLOR_1,
+            background: DEFAULT_COLOR_2,
+            highlight: {
+                border: DEFAULT_COLOR_1,
+                background: DEFAULT_COLOR_2,
+            },
+        },
+    };
+
+    const INITIAL = {
+        shapeProperties : {
+            borderDashes: false,
+        },
+        color : {
+            border: ALTERNATE_COLOR_1,
+            background: ALTERNATE_COLOR_2,
+            highlight: {
+                border: ALTERNATE_COLOR_1,
+                background: ALTERNATE_COLOR_2,
+            }
+        }
+    };
+
+    const FINAL = {
+        shapeProperties : {
+            borderDashes: [15, 5],
+        },
+        color: {
+            border: DEFAULT_COLOR_1,
+            background: DEFAULT_COLOR_2,
+            highlight: {
+                border: DEFAULT_COLOR_1,
+                background: DEFAULT_COLOR_2,
+            },
+        },
+    };
+
+    const BOTH = {
+        shapeProperties : {
+            borderDashes: [15, 5],
+        },
+        color : {
+            border: ALTERNATE_COLOR_1,
+            background: ALTERNATE_COLOR_2,
+            highlight: {
+                border: ALTERNATE_COLOR_1,
+                background: ALTERNATE_COLOR_2,
+            },
+        },
+    };
+</script>
+
+{% endmacro %}
