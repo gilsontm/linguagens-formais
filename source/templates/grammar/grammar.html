@@ -50,7 +50,7 @@
             $(`${GRAMMAR_FORM} input[type=text]:enabled`).val("");
         }
 
-        function populate_grammar_form(grammar) {
+        function import_grammar(grammar) {
             clear_grammar_form();
             let fields;
             for (key in grammar) {
@@ -68,7 +68,7 @@
             }
         }
 
-        function read_grammar_form() {
+        function export_grammar() {
             let value;
             let inputs;
             let grammar = {};

@@ -17,6 +17,7 @@
     <script type="text/javascript">
         var global = {
             network: null,
+            options: null,
             nodes: null,
             edges: null,
             initial_node: null,
@@ -58,7 +59,7 @@
             global.nodes = new vis.DataSet([]);
             global.edges = new vis.DataSet([]);
 
-            let options = {
+            global.options = {
                 nodes: {
                     shape: "circle",
                     widthConstraint: 50,
@@ -78,10 +79,14 @@
                 },
                 physics: {
                     enabled: false,
+                    barnesHut: {
+                        avoidOverlap: 0,
+                    },
+                    stabilization: true,
                 },
             };
 
-            global.network = new vis.Network(container, {nodes: global.nodes, edges: global.edges}, options);
+            global.network = new vis.Network(container, {nodes: global.nodes, edges: global.edges}, global.options);
             global.network.on("doubleClick", event => {
                 if (event.nodes.length > 0) {
                     edit_node(global.nodes.get(event.nodes[0]), data => global.nodes.update(data));
@@ -89,12 +94,15 @@
                     edit_edge(global.edges.get(event.edges[0]), data => global.edges.update(data));
                 }
             });
-
             global.network.on("select", event => {
                 if (event.nodes.length || event.edges.length)
                     $(REMOVE_BTN).removeClass("d-none");
                 else 
                     $(REMOVE_BTN).addClass("d-none");
+            });
+            global.network.on("stabilized", () => {
+                global.options.physics.enabled = false;
+                global.network.setOptions(global.options);
             });
         }
 
@@ -185,6 +193,59 @@
                     group = DEFAULT;
                 global.nodes.update({id: id, ...group});
             }
+        }
+
+        function import_automata(automata) {
+            global.edges.clear();
+            global.nodes.clear();
+            global.final_nodes = [];
+            global.initial_node = null;
+            global.options.physics.enabled = true;
+            global.network.setOptions(global.options);
+            let nodes = automata.states;
+            for (node of nodes) {
+                node.label = node.name;
+                if (node.initial) 
+                    global.initial_node = node.id;
+                if (node.final)
+                    global.final_nodes.push(node.id);
+                delete node.name;
+                delete node.initial;
+                delete node.final;
+            }
+            global.nodes.add(nodes);
+            update_nodes();
+            let edges = automata.transitions;
+            for (edge of edges) {
+                edge.literals = edge.values;
+                delete edge.values;
+                edge.label = edge.literals.join("\n");
+            }
+            global.edges.add(edges);
+        }
+
+        function export_automata() {
+            let nodes = global.nodes.get({
+                fields: ["id", "label"],
+            });
+            for (node of nodes) {
+                node.name = node.label;
+                delete node.label;
+                node.initial = (node.id == global.initial_node);
+                node.final = (global.final_nodes.includes(node.id));
+            }
+            let edges = global.edges.get({
+                fields: ["from", "to", "literals"]
+            });
+            for (edge of edges) {
+                edge.values = edge.literals;
+                delete edge.literals;
+            }
+            let automata = {
+                states: nodes,
+                transitions: edges,
+            }
+            return automata;           
         }
     </script>
 {% endmacro %}
