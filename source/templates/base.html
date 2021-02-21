@@ -13,7 +13,7 @@
         {% from 'menu/menu.html' import menu %}
         {% from 'grammar/grammar.html' import grammar %}
         {% from 'automata/automata.html' import automata %}
-
+        {% from 'regex/regex.html' import regex %}
         <div class="row no-gutters">
             <div class="col-2">
                 {{ menu() }}
@@ -21,7 +21,7 @@
             <div class="col-10">
                 <div class="tab-content mt-5">
                     <div role="tabpanel" id="content-3" class="tab-pane fade"> 
-                        <!-- TODO  -->
+                        {{ regex(prefix_id="1") }}
                     </div>
                     <div role="tabpanel" id="content-2" class="tab-pane fade">
                         {{ grammar(prefix_id="1") }}
