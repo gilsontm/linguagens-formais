@@ -1,4 +1,0 @@
-<structure>
-	<type>re</type>
-	<expression>((a + b)* . c*)*</expression>
-</structure>
