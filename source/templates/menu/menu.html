@@ -105,13 +105,15 @@
         });
 
         $("#import-3").click(() => {
-            // TODO
-            // Importar expressão regular
+            show_import_modal(data => post_import('/regex/import', data, res => import_regex(res)));
         });
 
         $("#export-3").click(() => {
             let data = export_regex();
-            post_export("/regex/export", JSON.stringify(data), "regex.xml", "application/xml")
+            if (data)
+                post_export("/regex/export", JSON.stringify(data), "regex.txt")
+            else 
+                show_error({status: ""}, "Expressão inválida não pode ser exportada.")
         });
 
         function post_import(url, data, success) {
@@ -126,28 +128,28 @@
             });
         }
 
-        function post_export(url, data, filename, type) {
+        function post_export(url, data, filename) {
             $.ajax({
                 type: "POST",
                 url: url,
                 data: data,
-                success: res => download(res, filename, (type ? type : "text/plain")),
+                success: res => download(res, filename),
                 error: res => show_error(res),
                 contentType: "application/json",
             });
         }
 
-        function download(data, filename, type) {
-            let blob = new Blob([data], {type: type});
+        function download(data, filename) {
+            let blob = new Blob([data], {type: "text/plain"});
             let link = $(DOWNLOAD_LINK).get(0);
             link.download = filename;
             link.href = window.URL.createObjectURL(blob);
             link.click();
         }
 
-        function show_error(res) {
+        function show_error(res, message) {
             $(ERROR_TOAST_TITLE).html(`Erro ${res.status}`);
-            $(ERROR_TOAST_BODY).html("A operação não pôde ser concluída.");
+            $(ERROR_TOAST_BODY).html(message ? message : "A operação não pôde ser concluída.");
             $(ERROR_TOAST).toast("show");
         }
     </script>
