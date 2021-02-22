@@ -27,8 +27,9 @@
             curr_step: 0,
             curr_state: 0,
             word: null,
-            level: null
-            level_count = 1;
+            level: null,
+            branch_count: 0,
+            processing: true
 
         };
 
@@ -130,8 +131,9 @@
             global.curr_state = 0;
             global.word = $(WORD_FIELD).val();
             $(TAIL_FIELD).val($(WORD_FIELD).val());
-            global.level_count = 1;
-            global.level = {0:{"processing": true, "accepted": false, , "curr_state": -1, "next_states": []}};
+            global.branch_count = 1;
+            global.level = {0:{processing: true, accepted: false, curr_state: -1}};
+            global.processing == true;
 
         }
 
@@ -140,15 +142,25 @@
         }
 
         function next_step(){
-           Object.keys(global.level).forEach(function(branch){
+            var curr_branch_count = global.branch_count;
+
+            if(!global.processing || global.curr_step == global.word.length )
+                return;
+            global.processing = false;
+            for (var branch = 0; branch < curr_branch_count; branch++) {
+                if(!global.level[branch].processing)
+                    continue;
+
                 global.word = $(WORD_FIELD).val()
-                send = {
+                var send = {
                     branch: branch, 
-                    word:global.word, 
-                    step:global.curr_step, 
-                    curr_state:global.curr_state, 
+                    configuration: global.level[branch], 
+                    word:global.word,
+                    step:global.curr_step,
                     automata: export_automata()
                 };
+
+                let curr_branch = branch;
 
                 $.ajax({
                     type: 'POST',
@@ -157,20 +169,43 @@
                     dataType: 'json',
                     processData: false,
                     contentType: 'application/json; charset=utf-8',
-                    success: function(data) { 
-                        console.log(data)
-                        if(data.processing){
-                            global.curr_state = data.id;
-                            global.curr_step++;
-                            update_tail();
-                        } else if(data.accepted) {
-                            $(TAIL_FIELD).val("Accepted");
-                        } else {
-                            console.log(branch+" rejected");
-                        }
-                    },
+                    success: function(data) {
+                        branching(data, curr_branch);
+                    }
                 });
-           });
+            }
+            global.curr_step++;
+            update_tail();
+            console.log(global.level);
+
+        }
+
+        function branching(data, branch){
+            if(data.processing){
+                global.processing = true;
+                var first = true;
+                for (var i = 0; i < data.next_states.length; i++) {
+                    var state_id = data.next_states[i];
+
+                    var new_branch = {processing: true, accepted: false, curr_state: state_id};
+                    if(first){
+                        global.level[branch] = new_branch;
+                        first = false
+                    } else{
+                        global.level[global.branch_count] = new_branch;
+                        global.branch_count+=1;
+                    }
+                }
+            } else{
+                if(data.accepted) {
+                    global.level[branch].processing = false;
+                    global.level[branch].accepted = true;
+                } else {
+                    global.level[branch].processing = false;
+                    global.level[branch].accepted = false;
+                }
+            }
+
         }
 
         function add_node(node_data, callback) {

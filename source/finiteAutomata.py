@@ -136,10 +136,10 @@ class FiniteAutomata:
         self.step = step
 
     def set_state(self, state_id):
-        if state_id in self.states:
-            self.curr_state_id = state_id
-        else:
+        if state_id == -1:
             self.curr_state_id = self.initial_id
+        elif (state_id in self.states):
+            self.curr_state_id = state_id
 
     #set processing step
     """def fast_run(self):
@@ -151,21 +151,25 @@ class FiniteAutomata:
         return result"""
 
     #step forward once processing word
-    def step_forward(self, branch_id):
+    def step_forward(self):
         if (not self.valid()):
-            return {"processing":False, "accepted": False, "branch_id":branch_id}
+            return {"processing":False, "accepted": False}
 
         if (len(self.word) == self.step):
             if (self.curr_state_id in self.final_ids):
-                return {"processing":False, "accepted": True, "branch_id":branch_id}
-            return {"processing":False, "accepted": False, "branch_id":branch_id}
+                return {"processing":False, "accepted": True}
+            return {"processing":False, "accepted": False}
 
         state = self.states[self.curr_state_id]
         curr_symbol = self.word[self.step]
         next_states = state.transition.get(curr_symbol)
+        next_state_ids = []
 
-        if (next_states == None and len(next_states)>0):
-            return {"processing":False, "accepted": False, "branch_id":branch_id, "curr_state": self.curr_state_id, "next_states":next_states}
 
-        return {"processing":True, "accepted": False, "branch_id":branch_id, "curr_state": self.curr_state_id, "next_states":next_states}
+        if (next_states == None):
+            return {"processing":False, "accepted": False, "curr_state": self.curr_state_id, "next_states":[]}
+        else:
+            for next_state in next_states:
+                next_state_ids.append(next_state.id)
+            return {"processing":True, "accepted": False, "curr_state": self.curr_state_id, "next_states":next_state_ids}
 

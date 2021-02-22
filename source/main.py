@@ -38,8 +38,8 @@ def step_automata():
     automata.from_json(json['automata'])
     automata.set_word(json['word'])
     automata.set_step(json['step'])
-    automata.set_state(json['curr_state'])
-    return (automata.step_forward(json['branch_id']))
+    automata.set_state(json['configuration']['curr_state'])
+    return (automata.step_forward())
 
 
 @app.route("/grammar/import", methods=["POST"])
