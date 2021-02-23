@@ -1,7 +1,7 @@
 import os
 from flask import *
 
-from models import regex
+from models.regex import Regex
 from models.grammar import Grammar
 from models.finite_automata import FiniteAutomata
 
@@ -54,16 +54,16 @@ def export_grammar():
 
 @app.route("/regex/import", methods=["POST"])
 def import_regex():
-    path = get_file_path("regex_upload.xml")
+    path = get_file_path("regex_upload.txt")
     file = request.files["file"]
     file.save(path)
-    expression = regex.from_file(path)
-    json = expression.to_json()
+    regex = Regex.from_file(path)
+    json = regex.to_json()
     return json
 
 @app.route("/regex/export", methods=["POST"])
 def export_regex():
-    path = get_file_path("regex.xml")
-    expression = regex.from_json(request.get_json())
-    expression.to_file(path)
-    return send_file(path, mimetype="application/xml")
+    path = get_file_path("regex.txt")
+    regex = Regex.from_json(request.get_json())
+    regex.to_file(path)
+    return send_file(path, mimetype="text/plain")
