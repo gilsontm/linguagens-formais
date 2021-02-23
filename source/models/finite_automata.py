@@ -2,24 +2,36 @@ import json
 from models.state import State
 
 
+
+"""
+    Finite automata class;
+    The automata structure stores separetly the initial and final states ids;
+    The states property stores each State of the automata;
+    A State structure points to each State on the arrow side of each of it's transitions;
+"""
 class FiniteAutomata:
 
     def __init__(self):
         #map of id to state
         self.states = {}
-        #current state id
-        self.curr_state_id = None
         #initial state id
         self.initial_id = None
         #finalstates state ids
         self.final_ids = []
-        #input word
-        self.word = None
-        #current processing step
-        self.step = 0
 
+        #automata as python dict directly from json
         self.json_automata = None
 
+
+    """
+        Builds this finite automata from a json;
+        The json reference, already a python dict, is stored in json_automata;
+        The json_automata dict has a 'states' index and a 'transitions' index;
+        Each states index enrty has its 'id', 'name', and 'initial' and final flags;
+        Each transition index enrty has its 'from', 'to', and 'symbol' list;
+        Each state, of State type, followed by it's transitions is stored in states dict, 
+            a python dict from id to State object;
+    """
     def from_json(self, json_automata):
         self.json_automata = json_automata
 
@@ -39,12 +51,21 @@ class FiniteAutomata:
             for symbol in symbols:
                 self.states[from_id].add_transition(symbol, to_state)
 
-
+    """
+        Checks if this automata has a initial state, 
+        at least one final state, 
+        and the states ids are on the states dict
+    """
     def valid(self):
         if ((not (self.curr_state_id in self.states)) or self.initial_id == None or len(self.states) == 0 or len(self.final_ids) == 0):
             return False
         return True
 
+    """
+        Writes to file this automata, if valid, in specifc format given a file_path;
+        First the json representation is built,
+        then is the required format;
+    """
     def to_file(self, file_path):
 
         if (not self.valid()):
@@ -83,6 +104,9 @@ class FiniteAutomata:
                 f.write(key+","+value[:-1]+'\n')
         return True
 
+    """
+        Builds this automata from formated file from a given file_path;
+    """
     def from_file(self, file_path):
         json_automata = {}
         with open(file_path) as f:
@@ -107,13 +131,22 @@ class FiniteAutomata:
                         self.states[to_state] = State(to_state, 'q'+str(to_state), (to_state in self.final_ids))
                     self.states[from_state].add_transition(symbol, int(to_state))
 
+    """
+        Translates this automata to a python dict
+        then stores it in 'json_automata';
 
+        Since the json structure splits states and transitions, 
+        diferently of this automata structure,
+        it is created a transition_map to hold the transitions
+        before appending then to the dict;
+    """
     def to_json(self):
-        transition_map = {}
 
+        transition_map = {}
         self.json_automata = {}
         self.json_automata['states'] = []
         self.json_automata['transitions'] = []
+
         for from_id, from_state in self.states.items():
             self.json_automata['states'].append({"id": from_state.id, "name": from_state.name, "final": (from_state.id in self.final_ids), "initial": (from_state.id == self.initial_id)})
 
@@ -130,14 +163,3 @@ class FiniteAutomata:
                 self.json_automata['transitions'].append({"from": from_id, "to": to_id, "values": values}) 
         return self.json_automata
 
-    def set_word(self, word):
-        self.word = word
-
-    def set_step(self, step):
-        self.step = step
-
-    def set_state(self, state_id):
-        if state_id in self.states:
-            self.curr_state_id = state_id
-        else:
-            self.curr_state_id = self.initial_id
