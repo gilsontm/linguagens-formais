@@ -156,18 +156,32 @@
             for (var branch = 0; branch < global.branch_count; branch++) {
                 var new_state = $(state_block);
                 new_state.attr("id", "branch-"+branch);
+
                 var curr_state = global.level[branch].curr_state;
                 var curr_step = global.level[branch].curr_step;
+
+                var processing = global.level[branch].processing;
+                var accepted = global.level[branch].accepted;
+
+
                 var remaining = global.word.substring(curr_step, global.word.length);
                 
+                if (curr_state == -1)
+                    curr_state = global.initial_node;
+
                 if (global.initial_node == curr_state)
                     new_state.find('.state').addClass('initial');
                 
                 if (global.final_nodes.includes(curr_state)) 
                     new_state.find('.state').addClass('final');
-                
-                new_state.find('.state').text("q"+curr_state);
+
+                if (accepted) 
+                    new_state.addClass('accepted');
+                else if(!processing)
+                    new_state.addClass('rejected');
+
                 new_state.find('.word').text(remaining);
+                new_state.find('.state').text("q"+curr_state);
 
                 $(STATES_PANEL).append(new_state);
             }
@@ -198,6 +212,8 @@
 
             global.processing = false;
 
+            var requests = [];
+
             for (var branch = 0; branch < curr_branch_count; branch++) {
                 if(!global.level[branch].processing)
                     continue;
@@ -211,30 +227,34 @@
 
                 let curr_branch = branch;
 
-                $.ajax({
-                    type: 'POST',
-                    url: '/automata/step',
-                    data: JSON.stringify(send),
-                    dataType: 'json',
-                    processData: false,
-                    contentType: 'application/json; charset=utf-8',
-                    success: function(data) {
-                        console.log(data);
-                        branching(data, curr_branch);
-                    }
-                });
+                requests.push(
+                    $.ajax({
+                        type: 'POST',
+                        url: '/automata/step',
+                        data: JSON.stringify(send),
+                        dataType: 'json',
+                        processData: false,
+                        contentType: 'application/json; charset=utf-8',
+                        success: function(data) {
+                            console.log(data);
+                            branching(data, curr_branch);
+                        }
+                    })
+                );
             }
-            update_tail();
-            global.curr_node = {};
-            for (var i = 0; i < curr_branch_count; i++) {
-                global.curr_node[global.level[i].curr_state] = true;
-            }
-            console.log(global.curr_node);
-            update_nodes()
-            update_branches();
+
+            $.when(...requests).done(function(){
+                update_tail();
+                global.curr_node = {};
+                for (var i = 0; i < global.branch_count; i++) {
+                    if (global.level[i].processing)
+                        global.curr_node[global.level[i].curr_state] = true;
+                }
+                update_nodes()
+                update_branches();
+            });
 
         }
-
         function branching(data, branch){
             if(data.processing){
                 global.processing = true;
