@@ -16,3 +16,60 @@ svg.bi {
 .custom-file-input ~ .custom-file-label::after {
     content: "Buscar";
 }
+
+
+.states-container {
+    height: 25vh;
+    overflow-y: hidden;
+    overflow-x: scroll;
+}
+
+.state-block {
+    display: inline-block;
+    height: calc(100% - 2em);
+    width: 35vh;
+    background-color: whitesmoke;
+    margin: 1em 0 1em 1em;
+    padding: 1em;
+
+    border-radius: 2px;
+
+	border-color: dimgrey;
+	border-width: 4px;
+	border-style: dashed none  none none;
+
+}
+
+.state-block > .state {
+	border-color: #2b7ce9;
+	border-width: 0.2em;
+	border-style: solid;
+    border-radius: 100000000000000000000000000000000000000000000000px;
+    background-color: #d2e5ff;
+    height: 10vh;
+    width: 10vh;
+
+    text-align: center;
+	display: flex;
+	justify-content: center;
+	align-content: center;
+	flex-direction: column;
+
+}
+
+.state-block > .state.initial{
+	border-color: #ff8c00;
+    background-color: #b58f65;
+
+}
+
+.state-block > .state.final{
+	border-style: dashed;
+}
+.state-block > .word{
+	margin: 2px;
+	padding: 2px;
+	color: dimgrey;
+	font-weight: bold;
+    overflow-x: scroll;
+}

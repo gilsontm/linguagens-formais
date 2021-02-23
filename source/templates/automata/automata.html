@@ -2,6 +2,7 @@
 {% from 'automata/constants.html' import constants %}
 {% from 'automata/modal.html' import node_modal, edge_modal %}
 
+
 {% macro automata(prefix_id='') %}
     <div class="container">
         <h2 class="text-center mt-5"> Edição de Autômatos Finitos </h2>
@@ -10,11 +11,14 @@
         {{ node_modal(prefix_id=prefix_id) }}
         {{ edge_modal(prefix_id=prefix_id) }}
         </div>
+        <div id="{{prefix_id}}-states-container" class="bg-light border states-container"> 
+        </div>
     </div>
 
     {{ constants(prefix_id=prefix_id) }}
 
     <script type="text/javascript">
+        const state_block = "<div class='state-block'><div class='state'>q0</div><div class='word'></div></div>";
         var global = {
             network: null,
             options: null,
@@ -129,6 +133,7 @@
         }
 
         function reset_automata_state(){
+
             global.curr_step = 0;
             global.curr_state = 0;
             global.word = $(WORD_FIELD).val();
@@ -138,11 +143,34 @@
             global.processing = true;
             global.curr_node = {};
             update_nodes();
+            update_branches();
 
         }
 
         function update_tail(){
             $(TAIL_FIELD).val(global.word.substring(global.curr_step, global.word.length));
+        }
+
+        function update_branches(){
+            $(STATES_PANEL).empty();
+            for (var branch = 0; branch < global.branch_count; branch++) {
+                var new_state = $(state_block);
+                new_state.attr("id", "branch-"+branch);
+                var curr_state = global.level[branch].curr_state;
+                var curr_step = global.level[branch].curr_step;
+                var remaining = global.word.substring(curr_step, global.word.length);
+                
+                if (global.initial_node == curr_state)
+                    new_state.find('.state').addClass('initial');
+                
+                if (global.final_nodes.includes(curr_state)) 
+                    new_state.find('.state').addClass('final');
+                
+                new_state.find('.state').text("q"+curr_state);
+                new_state.find('.word').text(remaining);
+
+                $(STATES_PANEL).append(new_state);
+            }
         }
 
         function remove_failed_branches(){
@@ -203,6 +231,7 @@
             }
             console.log(global.curr_node);
             update_nodes()
+            update_branches();
 
         }
 
