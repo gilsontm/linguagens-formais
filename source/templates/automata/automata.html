@@ -26,10 +26,11 @@
 
             curr_step: 0,
             curr_state: 0,
-            word: null,
+            word: "",
             level: null,
             branch_count: 0,
-            processing: true
+            processing: true,
+            curr_node: {}
 
         };
 
@@ -73,6 +74,7 @@
         });
         $(document).ready(() => {
             init_automata($(CONTAINER).get(0));
+            reset_automata_state();
         });
 
         function init_automata(container) {
@@ -132,8 +134,10 @@
             global.word = $(WORD_FIELD).val();
             $(TAIL_FIELD).val($(WORD_FIELD).val());
             global.branch_count = 1;
-            global.level = {0:{processing: true, accepted: false, curr_state: -1}};
-            global.processing == true;
+            global.level = {0:{processing: true, accepted: false, curr_state: -1, curr_step: 0}};
+            global.processing = true;
+            global.curr_node = {};
+            update_nodes();
 
         }
 
@@ -141,22 +145,39 @@
             $(TAIL_FIELD).val(global.word.substring(global.curr_step, global.word.length));
         }
 
-        function next_step(){
-            var curr_branch_count = global.branch_count;
+        function remove_failed_branches(){
+            var new_branch_count = 0;
+            var new_branches = {};
 
-            if(!global.processing || global.curr_step == global.word.length )
+            for (var branch = 0; branch < global.branch_count; branch++) {
+                if(global.level[branch].processing || global.level[branch].accepted){
+                    new_branches[new_branch_count] = global.level[branch];
+                    new_branch_count++;
+                }
+            }
+
+            global.level = new_branches;
+            global.branch_count = new_branch_count;
+        }
+
+        function next_step(){
+
+            remove_failed_branches();
+
+            var curr_branch_count = global.branch_count;
+            if(!global.processing)
                 return;
+
             global.processing = false;
+
             for (var branch = 0; branch < curr_branch_count; branch++) {
                 if(!global.level[branch].processing)
                     continue;
 
                 global.word = $(WORD_FIELD).val()
                 var send = {
-                    branch: branch, 
                     configuration: global.level[branch], 
                     word:global.word,
-                    step:global.curr_step,
                     automata: export_automata()
                 };
 
@@ -170,13 +191,18 @@
                     processData: false,
                     contentType: 'application/json; charset=utf-8',
                     success: function(data) {
+                        console.log(data);
                         branching(data, curr_branch);
                     }
                 });
             }
-            global.curr_step++;
             update_tail();
-            console.log(global.level);
+            global.curr_node = {};
+            for (var i = 0; i < curr_branch_count; i++) {
+                global.curr_node[global.level[i].curr_state] = true;
+            }
+            console.log(global.curr_node);
+            update_nodes()
 
         }
 
@@ -184,10 +210,37 @@
             if(data.processing){
                 global.processing = true;
                 var first = true;
+                var curr_step = global.level[branch].curr_step;
+
                 for (var i = 0; i < data.next_states.length; i++) {
                     var state_id = data.next_states[i];
 
-                    var new_branch = {processing: true, accepted: false, curr_state: state_id};
+                    var new_branch = {
+                        processing: true, 
+                        accepted: false, 
+                        curr_state: state_id, 
+                        curr_step: curr_step+1
+                    };
+
+                    if(first){
+                        global.level[branch] = new_branch;
+                        first = false
+                    } else{
+                        global.level[global.branch_count] = new_branch;
+                        global.branch_count+=1;
+                    }
+                }
+
+                for (var i = 0; i < data.next_episilon_states.length; i++) {
+                    var state_id = data.next_episilon_states[i];
+
+                    var new_branch = {
+                        processing: true, 
+                        accepted: false, 
+                        curr_state: state_id, 
+                        curr_step: curr_step
+                    };
+
                     if(first){
                         global.level[branch] = new_branch;
                         first = false
@@ -286,16 +339,30 @@
             for (id of ids) {
                 if (global.final_nodes.includes(id)) {
                     if (global.initial_node == id) 
-                        group = BOTH;
+                        if (global.curr_node.hasOwnProperty(id)) 
+                            group = CURRENT_BOTH;
+                        else
+                            group = BOTH;
                     else 
-                        group = FINAL;
+                        if (global.curr_node.hasOwnProperty(id)) 
+                            group = CURRENT_FINAL;
+                        else
+                            group = FINAL;
                 } else if (global.initial_node == id) 
-                    group = INITIAL;
+                    if (global.curr_node.hasOwnProperty(id)) 
+                        group = CURRENT_INITIAL;
+                    else
+                        group = INITIAL;
                 else
-                    group = DEFAULT;
+                    if (global.curr_node.hasOwnProperty(id)) 
+                        group = CURRENT;
+                    else
+                        group = DEFAULT;
+
                 global.nodes.update({id: id, ...group});
             }
         }
+
 
         function import_automata(automata) {
             global.edges.clear();

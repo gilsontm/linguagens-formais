@@ -153,23 +153,28 @@ class FiniteAutomata:
     #step forward once processing word
     def step_forward(self):
         if (not self.valid()):
-            return {"processing":False, "accepted": False}
+            return {"processing":False, "accepted": False, "reason": "invalid"}
 
         if (len(self.word) == self.step):
             if (self.curr_state_id in self.final_ids):
                 return {"processing":False, "accepted": True}
-            return {"processing":False, "accepted": False}
+            return {"processing":False, "accepted": False, "reason": "rejected"}
 
         state = self.states[self.curr_state_id]
         curr_symbol = self.word[self.step]
         next_states = state.transition.get(curr_symbol)
+        next_episilon_states = state.transition.get('&')
         next_state_ids = []
+        next_episilon_state_ids = []
 
-
-        if (next_states == None):
+        if (next_states == None and next_episilon_states == None):
             return {"processing":False, "accepted": False, "curr_state": self.curr_state_id, "next_states":[]}
         else:
-            for next_state in next_states:
-                next_state_ids.append(next_state.id)
-            return {"processing":True, "accepted": False, "curr_state": self.curr_state_id, "next_states":next_state_ids}
+            if (next_states != None):
+                for next_state in next_states:
+                    next_state_ids.append(next_state.id)
+            if (next_episilon_states != None):
+                for next_episilon_state in next_episilon_states:
+                    next_episilon_state_ids.append(next_episilon_state.id)
+            return {"processing":True, "accepted": False, "curr_state": self.curr_state_id, "next_states": next_state_ids, "next_episilon_states": next_episilon_state_ids}
 

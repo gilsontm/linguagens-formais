@@ -37,7 +37,7 @@ def step_automata():
     automata = FiniteAutomata()
     automata.from_json(json['automata'])
     automata.set_word(json['word'])
-    automata.set_step(json['step'])
+    automata.set_step(json['configuration']['curr_step'])
     automata.set_state(json['configuration']['curr_state'])
     return (automata.step_forward())
 

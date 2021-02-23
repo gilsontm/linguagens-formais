@@ -30,6 +30,10 @@
     const DEFAULT_COLOR_2 = "#d2e5ff";
     const ALTERNATE_COLOR_1 = "#ff8c00";
     const ALTERNATE_COLOR_2 = "#f2c89b";
+    const CURRENT_COLOR_1 = "#19529e";
+    const CURRENT_COLOR_2 = "#7995ba";
+    const CURRENT_ALTERNATE_COLOR_1 = "#b36200";
+    const CURRENT_ALTERNATE_COLOR_2 = "#b58f65";
     
     // states
     const DEFAULT = {
@@ -42,6 +46,62 @@
             highlight: {
                 border: DEFAULT_COLOR_1,
                 background: DEFAULT_COLOR_2,
+            },
+        },
+    };
+
+    const CURRENT = {
+        shapeProperties : {
+            borderDashes: false,
+        },
+        color: {
+            border: CURRENT_COLOR_1,
+            background: CURRENT_COLOR_2,
+            highlight: {
+                border: CURRENT_COLOR_1,
+                background: CURRENT_COLOR_2,
+            },
+        },
+    };
+
+    const CURRENT_INITIAL = {
+        shapeProperties : {
+            borderDashes: false,
+        },
+        color : {
+            border: CURRENT_ALTERNATE_COLOR_1,
+            background: CURRENT_ALTERNATE_COLOR_2,
+            highlight: {
+                border: CURRENT_ALTERNATE_COLOR_1,
+                background: CURRENT_ALTERNATE_COLOR_2,
+            }
+        }
+    };
+
+    const CURRENT_FINAL = {
+        shapeProperties : {
+            borderDashes: [15, 5],
+        },
+        color: {
+            border: CURRENT_COLOR_1,
+            background: CURRENT_COLOR_2,
+            highlight: {
+                border: CURRENT_COLOR_1,
+                background: CURRENT_COLOR_2,
+            },
+        },
+    };
+
+    const CURRENT_BOTH = {
+        shapeProperties : {
+            borderDashes: [15, 5],
+        },
+        color : {
+            border: CURRENT_ALTERNATE_COLOR_1,
+            background: CURRENT_ALTERNATE_COLOR_2,
+            highlight: {
+                border: CURRENT_ALTERNATE_COLOR_1,
+                background: CURRENT_ALTERNATE_COLOR_2,
             },
         },
     };
