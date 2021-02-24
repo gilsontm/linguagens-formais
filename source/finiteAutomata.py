@@ -24,7 +24,7 @@ class FiniteAutomata:
         self.json_automata = json_automata
 
         for state in self.json_automata['states']:
-            self.states[state['id']] = State(state['id'], state['name'], state['final'])
+            self.states[state['id']] = State(state['id'], state['name'])
             if (state['initial']):
                 self.initial_id = state['id']
                 self.curr_state_id = state['id']
@@ -46,7 +46,6 @@ class FiniteAutomata:
         return True
 
     def to_file(self, file_path):
-
         if (not self.valid()):
             return False
 
@@ -178,3 +177,62 @@ class FiniteAutomata:
                     next_episilon_state_ids.append(next_episilon_state.id)
             return {"processing":True, "accepted": False, "curr_state": self.curr_state_id, "next_states": next_state_ids, "next_episilon_states": next_episilon_state_ids}
 
+
+    def determinization(self):
+
+        new_states = {}
+        epsilon_closure = self.epsilon_closure()
+
+        self.append_state(epsilon_closure[self.states[self.initial_id].id], epsilon_closure, new_states)
+
+        print(new_states)
+
+
+    def append_state(self, closure, epsilon_closure, new_states):
+        name = self.closure_name(closure)
+        new_states[name] = {}
+        for state_id in closure:
+            for symbol, next_states in self.states[state_id].transition.items():
+                if symbol == '&':
+                    continue
+                if not (symbol in new_states[name]):
+                    new_states[name][symbol] = []
+                for next_state in next_states:
+                    for next_state_in_closure in epsilon_closure[next_state.id]:
+                        if not(next_state_in_closure in new_states[name][symbol]):
+                            new_states[name][symbol].append(next_state_in_closure)
+
+        for symbol, state_list in new_states[name].items():
+            if not (self.closure_name(state_list) in new_states):
+                self.append_state(state_list, epsilon_closure, new_states)
+
+
+    def closure_name(self, closure):
+        name = ""
+        for state_id in closure:
+            name = name + 'q' + str(state_id)
+
+        return name
+
+    def epsilon_closure(self):
+        closure = {}
+
+        for state_id, state in self.states.items():
+            closure[state_id] = [state_id]
+            self.epsilon_closure_of(state_id,closure[state_id])
+
+        return closure
+
+    #stores closure states ids list in closure
+    def epsilon_closure_of(self, state_id, closure):
+        if('&' in self.states[state_id].transition):
+            for state in self.states[state_id].transition['&']:
+                if not (state.id in closure):
+                    closure.append(state.id)
+                    self.epsilon_closure_of(state.id, closure)
+
+    def is_epsilon(self):
+        for state_id, state in self.states.items():
+            if ('&' in state.transition):
+                return True
+        return False

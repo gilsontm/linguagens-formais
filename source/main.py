@@ -8,7 +8,9 @@ app = Flask(__name__)
 from .finiteAutomata import FiniteAutomata
 app.config["FILES_FOLDER"] = os.path.join(os.path.dirname(__file__), "files")
 
-
+def get_file_path(filename):
+    path = os.path.join(app.config["FILES_FOLDER"], filename)
+    return path
 
 @app.route("/")
 def main():
@@ -16,19 +18,21 @@ def main():
 
 @app.route("/automata/import", methods=["POST"])
 def import_automata():
-    raise Exception()
-    path = save_file("upload.txt")
-    # from_file
-    # to_json
-    json = {}
+    path = get_file_path("automata_upload.txt")
+    file = request.files["file"]
+    file.save(path)
+    automata = FiniteAutomata()
+    automata.from_file(path)
+    json = automata.to_json()
     return json
 
 @app.route("/automata/export", methods=["POST"])
 def export_automata():
-    json = request.get_json()
-    # from_json
-    # to_file -> path
-    path = ""
+    path = get_file_path("automata.txt")
+    automata = FiniteAutomata()
+    automata.from_json(request.get_json())
+    automata.to_file(path)
+    automata.determinization()
     return send_file(path, mimetype="text/plain")
 
 @app.route("/automata/step", methods=["POST"])
