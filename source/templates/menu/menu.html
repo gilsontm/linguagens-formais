@@ -105,13 +105,15 @@
         });
 
         $("#import-3").click(() => {
-            // TODO
-            // Importar expressão regular
+            show_import_modal(data => post_import('/regex/import', data, res => import_regex(res)));
         });
 
         $("#export-3").click(() => {
-            // TODO
-            // Exportar expressão regular
+            let data = export_regex();
+            if (data)
+                post_export("/regex/export", JSON.stringify(data), "regex.txt")
+            else 
+                show_error({status: ""}, "Expressão inválida não pode ser exportada.")
         });
 
         function post_import(url, data, success) {
@@ -145,9 +147,9 @@
             link.click();
         }
 
-        function show_error(res) {
+        function show_error(res, message) {
             $(ERROR_TOAST_TITLE).html(`Erro ${res.status}`);
-            $(ERROR_TOAST_BODY).html("A operação não pôde ser concluída.");
+            $(ERROR_TOAST_BODY).html(message ? message : "A operação não pôde ser concluída.");
             $(ERROR_TOAST).toast("show");
         }
     </script>

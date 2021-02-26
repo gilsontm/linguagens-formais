@@ -4,7 +4,7 @@
         <div class="row my-4">
             <div class="col-6">
                 <h5 class="text-center"> Caixa de texto </h5>
-                <textarea id="{{prefix_id}}-input-regex" class="bg-light border w-100 h-50vh p-3" style="resize: none;"> </textarea>
+                <textarea id="{{prefix_id}}-input-regex" class="bg-light border w-100 h-50vh p-3" style="resize: none;"></textarea>
             </div>
             <div class="col-6">
                 <h5 class="text-center"> Expressões interpretadas </h5>
@@ -57,7 +57,7 @@
             parsed = parsed.replace(/[A-Z]/g, "A");
             parsed = parsed.replace(/[a-z]/g, "a");
             parsed = parsed.replace(/a+/g, "a");
-            parsed = parsed.replace(/(\+|\*|\.)/g, "*");
+            parsed = parsed.replace(/(\+|\.)/g, "+");
             let lines = parsed.split("\n");
             lines = lines.filter(e => e);
             for (i in lines) {
@@ -66,18 +66,52 @@
                 if (!lines[i].startsWith("A=") || !lines[i].endsWith(";"))
                     return false;
                 lines[i] = lines[i].substring(2, lines[i].length - 1);
+                lines[i] = lines[i].replace(/[A-Z]/g, "a");
             }
             let length;
             for (line of lines) {
                 do {
                     length = line.length;
-                    line = line.replace(/a\*a/g, "a");
-                    line = line.replace(/\(a\)/g, "a");
+                    line = line.replace(/a\+a/g, "a");  //  a+a --> a
+                    line = line.replace(/\(a\)/g, "a"); //  (a) --> a
+                    line = line.replace(/a\*/g, "a");   //   a* --> a
                 } while (length > line.length);
                 if (line != "a") 
                     return false;
             }
             return true;
+        }
+
+        function import_regex(json) {
+            let text = "";
+            for (expression of json.expressions) {
+                for (key in expression)
+                    text += `${key} <- ${expression[key]};\n`;
+            }
+            $(INPUT_REGEX).val(text);
+            $(INPUT_REGEX).trigger("keyup");
+        }
+
+        function export_regex() {
+            let text = $(INPUT_REGEX).val();
+            if (validate(text))
+                return format_regex_json(text);
+            return false;
+        }
+
+        function format_regex_json(text) {
+            let json = {"expressions": []};
+            let elements;
+            let parsed = text;
+            parsed = parsed.replace(/ /g, "");
+            parsed = parsed.replace(/\n/g, "");
+            let lines = parsed.split(";");
+            lines = lines.filter(e => e);
+            for (line of lines) {
+                elements = line.split("<-");
+                json["expressions"].push({[elements[0]] : elements[1]});
+            }
+            return json;
         }
     </script>
 {% endmacro %}

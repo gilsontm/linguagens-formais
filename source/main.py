@@ -1,11 +1,13 @@
 import os
 from flask import *
-from werkzeug.exceptions import HTTPException
+
+from models.regex import Regex
+from models.grammar import Grammar
+from models.finite_automata import FiniteAutomata
 
 import requests
 
 app = Flask(__name__)
-from .finiteAutomata import FiniteAutomata
 app.config["FILES_FOLDER"] = os.path.join(os.path.dirname(__file__), "files")
 
 def get_file_path(filename):
@@ -48,39 +50,34 @@ def step_automata():
 
 @app.route("/grammar/import", methods=["POST"])
 def import_grammar():
-    path = save_file("upload.txt")
-    # from_file
-    # to_json
-    json = {}
+    path = get_file_path("grammar_upload.txt")
+    file = request.files["file"]
+    file.save(path)
+    grammar = Grammar()
+    grammar.from_file(path)
+    json = grammar.to_json()
     return json
 
 @app.route("/grammar/export", methods=["POST"])
 def export_grammar():
-    json = request.get_json()
-    # from_json
-    # to_file -> path
-    path = ""
+    path = get_file_path("grammar.txt")
+    grammar = Grammar()
+    grammar.from_json(request.get_json())
+    grammar.to_file(path)
     return send_file(path, mimetype="text/plain")
 
-@app.route("/expression/import", methods=["POST"])
-def import_expression():
-    path = save_file("upload.txt")
-    # from_file
-    # to_json
-    json = {}
-    return json
-
-@app.route("/expression/export", methods=["POST"])
-def export_expression():
-    json = request.get_json()
-    # from_json
-    # to_file -> path
-    path = ""
-    return send_file(path, mimetype="text/plain")
-
-def save_file(filename):
-    path = os.path.join(app.config["FILES_FOLDER"], filename)
+@app.route("/regex/import", methods=["POST"])
+def import_regex():
+    path = get_file_path("regex_upload.txt")
     file = request.files["file"]
     file.save(path)
-    return path
-   
+    regex = Regex.from_file(path)
+    json = regex.to_json()
+    return json
+
+@app.route("/regex/export", methods=["POST"])
+def export_regex():
+    path = get_file_path("regex.txt")
+    regex = Regex.from_json(request.get_json())
+    regex.to_file(path)
+    return send_file(path, mimetype="text/plain")

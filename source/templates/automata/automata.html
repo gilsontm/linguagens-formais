@@ -31,7 +31,7 @@
             curr_step: 0,
             curr_state: 0,
             word: "",
-            level: null,
+            branches: null,
             branch_count: 0,
             processing: true,
             curr_node: {}
@@ -66,16 +66,17 @@
 
 
         $(STEP_BTN).click(() => {
-            next_step()
+            next_step();
         });
 
         $(RESET_BTN).click(() => {
-            reset_automata_state()
+            reset_automata_state();
         });
 
         $(WORD_FIELD).on('input', () => {
-            reset_automata_state()
+            reset_automata_state();
         });
+
         $(document).ready(() => {
             init_automata($(CONTAINER).get(0));
             reset_automata_state();
@@ -137,18 +138,13 @@
             global.curr_step = 0;
             global.curr_state = 0;
             global.word = $(WORD_FIELD).val();
-            $(TAIL_FIELD).val($(WORD_FIELD).val());
             global.branch_count = 1;
-            global.level = {0:{processing: true, accepted: false, curr_state: -1, curr_step: 0}};
+            global.branches = {0:{processing: true, accepted: false, curr_state: -1, curr_step: 0}};
             global.processing = true;
             global.curr_node = {};
             update_nodes();
             update_branches();
 
-        }
-
-        function update_tail(){
-            $(TAIL_FIELD).val(global.word.substring(global.curr_step, global.word.length));
         }
 
         function update_branches(){
@@ -157,11 +153,11 @@
                 var new_state = $(state_block);
                 new_state.attr("id", "branch-"+branch);
 
-                var curr_state = global.level[branch].curr_state;
-                var curr_step = global.level[branch].curr_step;
+                var curr_state = global.branches[branch].curr_state;
+                var curr_step = global.branches[branch].curr_step;
 
-                var processing = global.level[branch].processing;
-                var accepted = global.level[branch].accepted;
+                var processing = global.branches[branch].processing;
+                var accepted = global.branches[branch].accepted;
 
 
                 var remaining = global.word.substring(curr_step, global.word.length);
@@ -171,7 +167,7 @@
 
                 if (global.initial_node == curr_state)
                     new_state.find('.state').addClass('initial');
-                
+                    
                 if (global.final_nodes.includes(curr_state)) 
                     new_state.find('.state').addClass('final');
 
@@ -192,13 +188,13 @@
             var new_branches = {};
 
             for (var branch = 0; branch < global.branch_count; branch++) {
-                if(global.level[branch].processing || global.level[branch].accepted){
-                    new_branches[new_branch_count] = global.level[branch];
+                if(global.branches[branch].processing || global.branches[branch].accepted){
+                    new_branches[new_branch_count] = global.branches[branch];
                     new_branch_count++;
                 }
             }
 
-            global.level = new_branches;
+            global.branches = new_branches;
             global.branch_count = new_branch_count;
         }
 
@@ -215,12 +211,12 @@
             var requests = [];
 
             for (var branch = 0; branch < curr_branch_count; branch++) {
-                if(!global.level[branch].processing)
+                if(!global.branches[branch].processing)
                     continue;
 
                 global.word = $(WORD_FIELD).val()
                 var send = {
-                    configuration: global.level[branch], 
+                    configuration: global.branches[branch], 
                     word:global.word,
                     automata: export_automata()
                 };
@@ -244,22 +240,22 @@
             }
 
             $.when(...requests).done(function(){
-                update_tail();
                 global.curr_node = {};
                 for (var i = 0; i < global.branch_count; i++) {
-                    if (global.level[i].processing)
-                        global.curr_node[global.level[i].curr_state] = true;
+                    if (global.branches[i].processing)
+                        global.curr_node[global.branches[i].curr_state] = true;
                 }
                 update_nodes()
                 update_branches();
             });
 
         }
+
         function branching(data, branch){
             if(data.processing){
                 global.processing = true;
                 var first = true;
-                var curr_step = global.level[branch].curr_step;
+                var curr_step = global.branches[branch].curr_step;
 
                 for (var i = 0; i < data.next_states.length; i++) {
                     var state_id = data.next_states[i];
@@ -272,10 +268,10 @@
                     };
 
                     if(first){
-                        global.level[branch] = new_branch;
+                        global.branches[branch] = new_branch;
                         first = false
                     } else{
-                        global.level[global.branch_count] = new_branch;
+                        global.branches[global.branch_count] = new_branch;
                         global.branch_count+=1;
                     }
                 }
@@ -291,20 +287,20 @@
                     };
 
                     if(first){
-                        global.level[branch] = new_branch;
+                        global.branches[branch] = new_branch;
                         first = false
                     } else{
-                        global.level[global.branch_count] = new_branch;
+                        global.branches[global.branch_count] = new_branch;
                         global.branch_count+=1;
                     }
                 }
             } else{
                 if(data.accepted) {
-                    global.level[branch].processing = false;
-                    global.level[branch].accepted = true;
+                    global.branches[branch].processing = false;
+                    global.branches[branch].accepted = true;
                 } else {
-                    global.level[branch].processing = false;
-                    global.level[branch].accepted = false;
+                    global.branches[branch].processing = false;
+                    global.branches[branch].accepted = false;
                 }
             }
 

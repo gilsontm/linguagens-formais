@@ -54,7 +54,7 @@ svg.bi {
 	border-color: #2b7ce9;
 	border-width: 0.2em;
 	border-style: solid;
-    border-radius: 100000000000000000000000000000000000000000000000px;
+    border-radius: 10vh;
     background-color: #d2e5ff;
     height: 10vh;
     width: 10vh;
@@ -76,6 +76,7 @@ svg.bi {
 .state-block > .state.final{
 	border-style: dashed;
 }
+
 .state-block > .word{
 	margin: 2px;
 	padding: 2px;
