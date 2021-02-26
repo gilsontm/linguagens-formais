@@ -34,8 +34,15 @@ def export_automata():
     automata = FiniteAutomata()
     automata.from_json(request.get_json())
     automata.to_file(path)
-    automata.determinization()
     return send_file(path, mimetype="text/plain")
+
+@app.route("/automata/determinize", methods=["POST"])
+def determinize_automata():
+    automata = FiniteAutomata()
+    automata.from_json(request.get_json()['automata'])
+    determinized_automata = automata.determinization()
+    json = determinized_automata.to_json()
+    return json
 
 @app.route("/automata/step", methods=["POST"])
 def step_automata():

@@ -128,7 +128,7 @@ class FiniteAutomata:
                     to_state = int(to_state)
                     if not (to_state in self.states):
                         self.states[to_state] = State(to_state, 'q'+str(to_state))
-                    self.states[from_state].add_transition(symbol, int(to_state))
+                    self.states[from_state].add_transition(symbol, self.states[to_state])
 
     """
         Translates this automata to a python dict
@@ -157,9 +157,9 @@ class FiniteAutomata:
                         transition_map[from_id][to_id] = []
                     transition_map[from_id][to_id].append(symbol)
 
-        for from_id, to_id_n_values in transition_map.items():
-            for to_id, values in to_id_n_values.items():
-                self.json_automata['transitions'].append({"from": from_id, "to": to_id, "values": values}) 
+        for from_id, to_state_n_values in transition_map.items():
+            for to_state, values in to_state_n_values.items():
+                self.json_automata['transitions'].append({"from": from_id, "to": to_state.id, "values": values}) 
         return self.json_automata
 
     def set_word(self, word):
@@ -205,16 +205,42 @@ class FiniteAutomata:
 
 
     def determinization(self):
-
+        new_automata = FiniteAutomata()
         new_states = {}
         epsilon_closure = self.epsilon_closure()
+        initial_closure_name = self.closure_name(epsilon_closure[self.initial_id])
 
-        self.append_state(epsilon_closure[self.states[self.initial_id].id], epsilon_closure, new_states)
+        self.recursive_determinization(epsilon_closure[self.states[self.initial_id].id], epsilon_closure, new_states)
 
-        print(new_states)
+        name_to_id = {}
+        id_count = 0
+
+        for name, transitions in new_states.items():
+            if(initial_closure_name == name):
+                new_automata.initial_id = id_count
+
+            if (any(item in self.name_to_ids(name) for item in self.final_ids)):
+                new_automata.final_ids.append(id_count)
+
+            name_to_id[name] = id_count
+            new_automata.states[id_count] = State(id_count, name)
+            id_count += 1
 
 
-    def append_state(self, closure, epsilon_closure, new_states):
+        for name, transitions in new_states.items():
+            state = new_automata.states[name_to_id[name]]
+
+            for symbol, states in transitions.items():
+                next_name = self.closure_name(states)
+                next_id = name_to_id[next_name]
+                next_state = new_automata.states[next_id]
+
+                state.add_transition(symbol,next_state)
+
+        return new_automata
+
+
+    def recursive_determinization(self, closure, epsilon_closure, new_states):
         name = self.closure_name(closure)
         new_states[name] = {}
         for state_id in closure:
@@ -228,9 +254,10 @@ class FiniteAutomata:
                         if not(next_state_in_closure in new_states[name][symbol]):
                             new_states[name][symbol].append(next_state_in_closure)
 
+
         for symbol, state_list in new_states[name].items():
             if not (self.closure_name(state_list) in new_states):
-                self.append_state(state_list, epsilon_closure, new_states)
+                self.recursive_determinization(state_list, epsilon_closure, new_states)
 
 
     def closure_name(self, closure):
@@ -239,6 +266,11 @@ class FiniteAutomata:
             name = name + 'q' + str(state_id)
 
         return name
+
+    def name_to_ids(self, name):
+        string_ids = name.split("q")
+        string_ids.remove('')
+        return [int(i) for i in string_ids]
 
     def epsilon_closure(self):
         closure = {}

@@ -28,8 +28,6 @@
             final_nodes: [],
             next_node_id: 0,
 
-            curr_step: 0,
-            curr_state: 0,
             word: "",
             branches: null,
             branch_count: 0,
@@ -75,6 +73,10 @@
 
         $(WORD_FIELD).on('input', () => {
             reset_automata_state();
+        });
+
+        $(DETERMINIZE_BTN).click(() =>{
+            determinize();
         });
 
         $(document).ready(() => {
@@ -135,8 +137,6 @@
 
         function reset_automata_state(){
 
-            global.curr_step = 0;
-            global.curr_state = 0;
             global.word = $(WORD_FIELD).val();
             global.branch_count = 1;
             global.branches = {0:{processing: true, accepted: false, curr_state: -1, curr_step: 0}};
@@ -304,6 +304,21 @@
                 }
             }
 
+        }
+
+        function determinize(){
+            $.ajax({
+                type: 'POST',
+                url: '/automata/determinize',
+                data: JSON.stringify({automata: export_automata()}),
+                dataType: 'json',
+                processData: false,
+                contentType: 'application/json; charset=utf-8',
+                success: function(data) {
+                    console.log(data);
+                    import_automata(data);
+                }
+            })
         }
 
         function add_node(node_data, callback) {
