@@ -90,7 +90,7 @@ class FiniteAutomata:
                     key = str(transition['from'])+","+symbol
                     if not(key in transition_map):
                         transition_map[key] = ""
-                    transition_map[key] += str(transition['to'].id)+"-"
+                    transition_map[key] += str(transition['to'])+"-"
 
             symbol_set_string = ""
             for value in symbol_set:
@@ -201,7 +201,7 @@ class FiniteAutomata:
             if (next_episilon_states != None):
                 for next_episilon_state in next_episilon_states:
                     next_episilon_state_ids.append(next_episilon_state.id)
-            return {"processing":True, "accepted": False, "curr_state": self.curr_state_id, "next_states": next_state_ids, "next_episilon_states": next_episilon_state_ids}
+            return {"processing":True, "accepted": False, "next_states": next_state_ids, "next_episilon_states": next_episilon_state_ids}
 
 
     def determinization(self):
@@ -210,7 +210,7 @@ class FiniteAutomata:
         epsilon_closure = self.epsilon_closure()
         initial_closure_name = self.closure_name(epsilon_closure[self.initial_id])
 
-        self.recursive_determinization(epsilon_closure[self.states[self.initial_id].id], epsilon_closure, new_states)
+        self.determinization(epsilon_closure[self.states[self.initial_id].id], epsilon_closure, new_states)
 
         name_to_id = {}
         id_count = 0
@@ -240,10 +240,13 @@ class FiniteAutomata:
         return new_automata
 
 
-    def recursive_determinization(self, closure, epsilon_closure, new_states):
+    """
+    A determinização
+    """
+    def determinization(self, closure, epsilon_closure, new_states):
         name = self.closure_name(closure)
         new_states[name] = {}
-        for state_id in closure:
+        for state_id in closure:    
             for symbol, next_states in self.states[state_id].transition.items():
                 if symbol == '&':
                     continue
@@ -257,7 +260,7 @@ class FiniteAutomata:
 
         for symbol, state_list in new_states[name].items():
             if not (self.closure_name(state_list) in new_states):
-                self.recursive_determinization(state_list, epsilon_closure, new_states)
+                self.determinization(state_list, epsilon_closure, new_states)
 
 
     def closure_name(self, closure):
@@ -294,3 +297,39 @@ class FiniteAutomata:
             if ('&' in state.transition):
                 return True
         return False
+
+    def unify(automata_1, automata_2):
+
+        new_automata = FiniteAutomata()
+
+        new_states = {}
+        new_final_states = []
+        inital_state = State(0,"q0")
+
+
+        new_automata.states = new_states
+        new_automata.final_ids = new_final_states
+        new_automata.initial_id = 0
+
+        inital_state.add_transition('&',automata_1.states[automata_1.initial_id])
+        inital_state.add_transition('&',automata_2.states[automata_2.initial_id])
+
+        new_states[0] = inital_state
+
+        for state_id, state in automata_1.states.items():
+            state.id = state_id+1
+            new_states[state_id+1] = state
+            if state_id in automata_1.final_ids:
+                new_final_states.append(state_id+1)
+
+        automata_2_state_count = len(automata_1.states);
+        for state_id, state in automata_2.states.items():
+            automata_2_state_count += 1
+            state.id = automata_2_state_count
+            new_states[automata_2_state_count] = state
+            if state_id in automata_2.final_ids:
+                new_final_states.append(automata_2_state_count)
+
+        return new_automata
+
+ 

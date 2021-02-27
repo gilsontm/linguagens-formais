@@ -3,6 +3,9 @@
 {% from 'automata/modal.html' import node_modal, edge_modal %}
 
 
+    {% from 'menu/modal.html' import import_modal %}
+    {{ import_modal(prefix_id='1') }}
+
 {% macro automata(prefix_id='') %}
     <div class="container">
         <h2 class="text-center mt-5"> Edição de Autômatos Finitos </h2>
@@ -79,6 +82,10 @@
             determinize();
         });
 
+        $(UNIFY_BTN).click(() => {
+            unify();
+        });
+
         $(document).ready(() => {
             init_automata($(CONTAINER).get(0));
             reset_automata_state();
@@ -135,6 +142,7 @@
             });
         }
 
+        //reset automata state
         function reset_automata_state(){
 
             global.word = $(WORD_FIELD).val();
@@ -147,6 +155,7 @@
 
         }
 
+        //updates branches visual user interface
         function update_branches(){
             $(STATES_PANEL).empty();
             for (var branch = 0; branch < global.branch_count; branch++) {
@@ -183,6 +192,7 @@
             }
         }
 
+        //removes failed branches from branches object
         function remove_failed_branches(){
             var new_branch_count = 0;
             var new_branches = {};
@@ -202,19 +212,25 @@
 
             remove_failed_branches();
 
+            //if theres nothing else to process, returns imediatly
             var curr_branch_count = global.branch_count;
             if(!global.processing)
                 return;
 
             global.processing = false;
 
+            //request array
             var requests = [];
 
+            //request states reached by the consumption of a symbol for each branch
+            //ignores branches that stopped in the last processing
             for (var branch = 0; branch < curr_branch_count; branch++) {
                 if(!global.branches[branch].processing)
                     continue;
 
                 global.word = $(WORD_FIELD).val()
+
+                //sends each branch data followed by the automata and the word
                 var send = {
                     configuration: global.branches[branch], 
                     word:global.word,
@@ -223,6 +239,7 @@
 
                 let curr_branch = branch;
 
+                //stores every request
                 requests.push(
                     $.ajax({
                         type: 'POST',
@@ -239,6 +256,8 @@
                 );
             }
 
+            //wait for every request of each branch to be done
+            //then updates the branches
             $.when(...requests).done(function(){
                 global.curr_node = {};
                 for (var i = 0; i < global.branch_count; i++) {
@@ -251,61 +270,81 @@
 
         }
 
-        function branching(data, branch){
+
+        /*  
+            records the branches reached by a given branch, identified by a branch_id
+            if the branch has finished processing, record the event
+
+            each branch is a JSON in the following format
+                {integer:{processing: boolean, accepted: boolean, curr_state: integer, curr_step: integer}}
+                the property name indicates a branch_id
+                processing indicates if the branch haven't been accepted nor failed
+                accepted indicates if the branch have been accepted or failed
+                curr_state indicates the current state wich the branch is
+                curr_step indicates wich caracter of the word the branch is processing
+            
+            overwrites the given branch
+            
+            data is a JSON in the following format
+                {processing:boolean , accepted: boolean, next_states: integer array, next_episilon_states:  integer array}
+                processing indicates if the branch haven't been accepted nor failed
+                accepted indicates if the branch have been accepted or failed
+                next_states contains states reached by normal transitions
+                next_episilon_states contains states reached by epsilon transitions
+
+        */
+        function branching(data, branch_id){
             if(data.processing){
                 global.processing = true;
                 var first = true;
-                var curr_step = global.branches[branch].curr_step;
+                var curr_step = global.branches[branch_id].curr_step;
 
-                for (var i = 0; i < data.next_states.length; i++) {
-                    var state_id = data.next_states[i];
+                //records new branches
+                var record_new_branches = (states, step_incrementation) => {
+                    for (var i = 0; i < states.length; i++) {
+                        var state_id = states[i];
 
-                    var new_branch = {
-                        processing: true, 
-                        accepted: false, 
-                        curr_state: state_id, 
-                        curr_step: curr_step+1
-                    };
+                        var new_branch = {
+                            processing: true, 
+                            accepted: false, 
+                            curr_state: state_id, 
+                            curr_step: curr_step+step_incrementation
+                        };
 
-                    if(first){
-                        global.branches[branch] = new_branch;
-                        first = false
-                    } else{
-                        global.branches[global.branch_count] = new_branch;
-                        global.branch_count+=1;
+                        if(first){
+                            global.branches[branch_id] = new_branch;
+                            first = false
+                        } else{
+                            global.branches[global.branch_count] = new_branch;
+                            global.branch_count+=1;
+                        }
                     }
                 }
 
-                for (var i = 0; i < data.next_episilon_states.length; i++) {
-                    var state_id = data.next_episilon_states[i];
+                //record branches with update in its curr_step
+                record_new_branches(data.next_states, 1);
 
-                    var new_branch = {
-                        processing: true, 
-                        accepted: false, 
-                        curr_state: state_id, 
-                        curr_step: curr_step
-                    };
+                /* 
+                    record branches with no update in its curr_step
+                    (reached by epsilon transitions)
+                */
+                record_new_branches(data.next_episilon_states, 0);
 
-                    if(first){
-                        global.branches[branch] = new_branch;
-                        first = false
-                    } else{
-                        global.branches[global.branch_count] = new_branch;
-                        global.branch_count+=1;
-                    }
-                }
+
             } else{
+                //records if the branch has stopped and if it has been accepted or not
                 if(data.accepted) {
-                    global.branches[branch].processing = false;
-                    global.branches[branch].accepted = true;
+                    global.branches[branch_id].processing = false;
+                    global.branches[branch_id].accepted = true;
                 } else {
-                    global.branches[branch].processing = false;
-                    global.branches[branch].accepted = false;
+                    global.branches[branch_id].processing = false;
+                    global.branches[branch_id].accepted = false;
                 }
             }
 
         }
 
+        //request automata determinization
         function determinize(){
             $.ajax({
                 type: 'POST',
@@ -319,6 +358,57 @@
                     import_automata(data);
                 }
             })
+        }
+
+        /*
+            request operation between two automata
+        */
+        const UNIFY = 'unify';
+        const INTERSECT = 'intersect';
+        function operate(operation){
+
+            var automata_1_done = $.Deferred();
+            var automata_2_done = $.Deferred();
+
+            var automata_1 = null
+            var automata_2 = null
+
+
+            //prompt user for first automata
+            show_import_modal(data => {
+                post_import('/automata/import', data, res => {
+                    automata_1 = res;
+                    automata_1_done.resolve();
+                });
+            });
+
+            //wait first automata and prompt for second
+            $.when(automata_1_done).done(()=>{
+                show_import_modal(data => {
+                    post_import('/automata/import', data, res => {
+                        automata_2 = res;
+                        automata_2_done.resolve();
+                    });
+                });
+            });
+
+            //wait for second automata and request unification to server
+            $.when(automata_2_done).done(()=>{
+                console.log(automata_1);
+                console.log(automata_2);
+                $.ajax({
+                    type: 'POST',
+                    url: '/automata/'+operation,
+                    data: JSON.stringify({automata_1: automata_1,automata_2: automata_2}),
+                    dataType: 'json',
+                    processData: false,
+                    contentType: 'application/json; charset=utf-8',
+                    success: function(data) {
+                        import_automata(data)
+                    }
+                })
+            });
+
         }
 
         function add_node(node_data, callback) {

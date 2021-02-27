@@ -28,6 +28,18 @@ def import_automata():
     json = automata.to_json()
     return json
 
+@app.route("/automata/unify", methods=["POST"])
+def unify_automata():
+    automata_1 = FiniteAutomata()
+    automata_2 = FiniteAutomata()
+
+    automata_1.from_json(request.get_json()['automata_1'])
+    automata_2.from_json(request.get_json()['automata_2'])
+
+    unified_automata = FiniteAutomata.unify(automata_1, automata_2)
+    json = unified_automata.to_json()
+    return json
+
 @app.route("/automata/export", methods=["POST"])
 def export_automata():
     path = get_file_path("automata.txt")
