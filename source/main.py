@@ -65,7 +65,7 @@ def export_automata():
 def determinize_automata():
     automata = FiniteAutomata()
     automata.from_json(request.get_json()['automata'])
-    determinized_automata = FiniteAutomata.determinization(automata)
+    determinized_automata = FiniteAutomata.determinize(automata)
     json = determinized_automata.to_json()
     return json
 

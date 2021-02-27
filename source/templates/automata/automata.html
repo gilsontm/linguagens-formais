@@ -328,10 +328,9 @@
                 //record branches with update in its curr_step
                 record_new_branches(data.next_states, 1);
 
-                /* 
-                    record branches with no update in its curr_step
-                    (reached by epsilon transitions)
-                */
+                 
+                //record branches with no update in its curr_step
+                //(reached by epsilon transitions)
                 record_new_branches(data.next_episilon_states, 0);
 
 
@@ -359,9 +358,7 @@
             })
         }
 
-        /*
-            request operation between two automata
-        */
+        //request operation between two automata
         const UNIFY = 'unify';
         const INTERSECT = 'intersect';
         function operate(operation){

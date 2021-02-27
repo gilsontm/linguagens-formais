@@ -205,10 +205,29 @@ class FiniteAutomata:
             return {"processing":True, "accepted": False, "next_states": next_state_ids, "next_episilon_states": next_episilon_state_ids}
 
 
+    #returns a map of state_id to its epsilon closure
+    def epsilon_closure(self):
+        closure = {}
+
+        for state_id, state in self.states.items():
+            closure[state_id] = [state_id]
+            self.epsilon_closure_of(state_id,closure[state_id])
+
+        return closure
+
+    #stores closure states ids list in closure
+    def epsilon_closure_of(self, state_id, closure):
+        if('&' in self.states[state_id].transition):
+            for state in self.states[state_id].transition['&']:
+                if not (state.id in closure):
+                    closure.append(state.id)
+                    self.epsilon_closure_of(state.id, closure)
+
     """
-        determinze automaton
+        returns determinized automaton
+        it also removes unreachable states of the automaton
     """
-    def determinization(automaton_in):
+    def determinize(automaton_in):
         automaton = copy.deepcopy(automaton_in)
 
         new_automata = FiniteAutomata()
@@ -272,44 +291,7 @@ class FiniteAutomata:
             if not (FiniteAutomata.closure_name(state_list) in new_states):
                 FiniteAutomata.determinization_recursion(automaton, state_list, epsilon_closure, new_states)
 
-    #returns state name given a list of states
-    def closure_name(closure):
-        name = ""
-        for state_id in closure:
-            name = name + 'q' + str(state_id)
 
-        return name
-
-    #inverse of closure_name
-    def name_to_ids(name):
-        string_ids = name.split("q")
-        string_ids.remove('')
-        return [int(i) for i in string_ids]
-
-    #returns a map of state_id to its epsilon closure
-    def epsilon_closure(self):
-        closure = {}
-
-        for state_id, state in self.states.items():
-            closure[state_id] = [state_id]
-            self.epsilon_closure_of(state_id,closure[state_id])
-
-        return closure
-
-    #stores closure states ids list in closure
-    def epsilon_closure_of(self, state_id, closure):
-        if('&' in self.states[state_id].transition):
-            for state in self.states[state_id].transition['&']:
-                if not (state.id in closure):
-                    closure.append(state.id)
-                    self.epsilon_closure_of(state.id, closure)
-
-    #verify deterministic property
-    def is_determnistic(self):
-        for state_id, state in self.states.items():
-            if ('&' in state.transition):
-                return False
-        return True
 
     """
         returns the unification of two given automata
@@ -338,20 +320,18 @@ class FiniteAutomata:
         inital_state.add_transition('&',automaton_2.states[automaton_2.initial_id])
         new_states[0] = inital_state
 
-        #changes automaton_1 states ids and names
+        #changes automaton_1 states ids
         for state_id, state in automaton_1.states.items():
             state.id = state_id+1
-            state.name = "q"+str(state.id)
             new_states[state_id+1] = state
             if state_id in automaton_1.final_ids:
                 new_final_states.append(state_id+1)
 
-        #changes automaton_2 states ids and names
+        #changes automaton_2 states ids
         automata_2_state_count = len(automaton_1.states);
         for state_id, state in automaton_2.states.items():
             automata_2_state_count += 1
             state.id = automata_2_state_count
-            state.name = "q"+str(state.id)
             new_states[automata_2_state_count] = state
             if state_id in automaton_2.final_ids:
                 new_final_states.append(automata_2_state_count)
@@ -383,9 +363,9 @@ class FiniteAutomata:
         returns the intersection of two given automata
         uses de morgan
     """
-    def intersect(automata_1, automata_2):
-        complement_1 = FiniteAutomata.complement(automata_1)
-        complement_2 = FiniteAutomata.complement(automata_2)
+    def intersect(automaton_1, automaton_2):
+        complement_1 = FiniteAutomata.complement(automaton_1)
+        complement_2 = FiniteAutomata.complement(automaton_2)
 
         unification_of_complements = FiniteAutomata.unify(complement_1, complement_2)
         
@@ -395,8 +375,113 @@ class FiniteAutomata:
         return intesection
 
     """
+        returns minimized deterministic finite automaton
+    """
+    def minimize(automaton_in):
+
+        P = list(automaton_in.states.keys())
+        Q = automaton_in.final_ids
+
+        SIGMA = automaton_in.alphabet()
+
+        #while (Q é não-vazio) do
+        while (Q):
+            print(len(Q))
+
+            #escolha e remova um conjunto A de Q
+            A = []
+            A.append(Q.pop())
+            if(Q):
+                A.append(Q.pop())
+
+            #for each c in ∑ do
+            for c in SIGMA:
+
+                #let X é o conjunto de estados para o qual uma transição sobre c leva a um estado em A
+                X = []
+                for state_id in list(automaton_in.states.keys()):
+                    if (c in automaton_in.states[state_id].transition):
+                        for state in automaton_in.states[state_id].transition[c]:
+                            if state.id in A and not(state.id in X):
+                                X.append(state.id)
+
+                #for each conjunto Y in P para o qual X ∩ Y é não-vazio do
+                every_Y_in_P = FiniteAutomata.powerset(P)
+
+                for Y in every_Y_in_P:
+                    Y_intersection_X = list(set(Y) & set(X))
+                    Y_minus_X = [item for item in Y if item not in X]
+                    if Y_intersection_X:
+                        #substitua Y em P pelos dois conjuntos X ∩ Y e Y \ X
+                        P = [item for item in P if item not in Y]
+                        P = list(set(P) | set(Y_minus_X) | set(Y_intersection_X))
+
+                        #if Y está contido em Q
+                        if(set(Y).issubset(set(Q))):
+                            #substitua Y em Q pelos mesmos dois conjuntos
+                            Q = [item for item in Q if item not in Y]
+                            Q = list(set(Q) | set(Y_minus_X) | set(Y_intersection_X))
+                        #else
+                        else:
+                            #adicione o menor dos dois conjuntos à Q
+                            if (len(Y_intersection_X) <= len(Y_minus_X)):
+                                Q = list(set(Q) | set(Y_intersection_X))
+                            else:
+                                Q = list(set(Q) | set(Y_minus_X))
+
+        print(*list(automaton_in.states.keys()), sep = ", ") 
+        print(*P, sep = ", ") 
+
+
+
+
+
+
+
+
+    def powerset(s):
+        power_set = []
+        x = len(s)
+        for i in range(1 << x):
+            power_set.append([s[j] for j in range(x) if (i & (1 << j))])
+        return power_set
+
+
+    """
         rename states to q+state_id
     """
     def renameStates(self):
         for state_id, state in self.states.items():
             state.name = "q"+str(state_id)
+
+
+    #returns state name given a list of states
+    def closure_name(closure):
+        name = ""
+        for state_id in closure:
+            name = name + 'q' + str(state_id)
+
+        return name
+
+    #inverse of closure_name
+    def name_to_ids(name):
+        string_ids = name.split("q")
+        string_ids.remove('')
+        return [int(i) for i in string_ids]
+
+    #verify deterministic property
+    def is_determnistic(self):
+        for state_id, state in self.states.items():
+            if ('&' in state.transition):
+                return False
+        return True
+
+    #returns alphabet symbol list
+    def alphabet(self):
+        alphabet = set()
+        for state_id, state in self.states.items():
+            for symbol in list(state.transition.keys()):
+                alphabet.add(symbol)
+
+        return list(alphabet)
+
