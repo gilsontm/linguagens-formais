@@ -7,7 +7,7 @@ from models.state import State
 """
     Finite automata class;
     The automata structure stores separetly the initial and final states ids;
-    The states property stores each ZState of the automata;
+    The states property stores each State of the automata;
     A State structure points to each State on the arrow side of each of it's transitions;
 """
 class FiniteAutomata:
@@ -19,10 +19,8 @@ class FiniteAutomata:
         self.initial_id = None
         #finalstates state ids
         self.final_ids = []
-
         #automata as python dict directly from json
         self.json_automata = None
-
 
     """
         Builds this finite automata from a json;
@@ -430,12 +428,7 @@ class FiniteAutomata:
                                 Q = list(set(Q) | set(Y_minus_X))
 
         print(*list(automaton_in.states.keys()), sep = ", ") 
-        print(*P, sep = ", ") 
-
-
-
-
-
+        print(*P, sep = ", ")
 
 
 
@@ -450,7 +443,7 @@ class FiniteAutomata:
     """
         rename states to q+state_id
     """
-    def renameStates(self):
+    def rename_states(self):
         for state_id, state in self.states.items():
             state.name = "q"+str(state_id)
 
@@ -485,3 +478,10 @@ class FiniteAutomata:
 
         return list(alphabet)
 
+    #get state by name
+    #returns none if no state found
+    def get_state_by_name(self, name):
+        for state_id, state in self.states.items():
+            if(state.name == name):
+                return name
+        return None
