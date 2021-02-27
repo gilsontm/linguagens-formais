@@ -83,7 +83,11 @@
         });
 
         $(UNIFY_BTN).click(() => {
-            unify();
+            operate(UNIFY);
+        });
+
+        $(INTERSECT_BTN).click(() => {
+            operate(INTERSECT);
         });
 
         $(document).ready(() => {
@@ -333,13 +337,8 @@
 
             } else{
                 //records if the branch has stopped and if it has been accepted or not
-                if(data.accepted) {
-                    global.branches[branch_id].processing = false;
-                    global.branches[branch_id].accepted = true;
-                } else {
-                    global.branches[branch_id].processing = false;
-                    global.branches[branch_id].accepted = false;
-                }
+                global.branches[branch_id].processing = false;
+                global.branches[branch_id].accepted = data.accepted;
             }
 
         }
@@ -394,8 +393,6 @@
 
             //wait for second automata and request unification to server
             $.when(automata_2_done).done(()=>{
-                console.log(automata_1);
-                console.log(automata_2);
                 $.ajax({
                     type: 'POST',
                     url: '/automata/'+operation,
@@ -405,6 +402,7 @@
                     contentType: 'application/json; charset=utf-8',
                     success: function(data) {
                         import_automata(data)
+                        console.log(data);
                     }
                 })
             });

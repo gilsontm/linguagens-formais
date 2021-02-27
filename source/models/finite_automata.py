@@ -1,4 +1,5 @@
 import json
+import copy
 from models.state import State
 
 
@@ -204,13 +205,18 @@ class FiniteAutomata:
             return {"processing":True, "accepted": False, "next_states": next_state_ids, "next_episilon_states": next_episilon_state_ids}
 
 
-    def determinization(self):
+    """
+        determinze automaton
+    """
+    def determinization(automaton_in):
+        automaton = copy.deepcopy(automaton_in)
+
         new_automata = FiniteAutomata()
         new_states = {}
-        epsilon_closure = self.epsilon_closure()
-        initial_closure_name = self.closure_name(epsilon_closure[self.initial_id])
+        epsilon_closure = automaton.epsilon_closure()
+        initial_closure_name = FiniteAutomata.closure_name(epsilon_closure[automaton.initial_id])
 
-        self.determinization(epsilon_closure[self.states[self.initial_id].id], epsilon_closure, new_states)
+        FiniteAutomata.determinization_recursion(automaton, epsilon_closure[automaton.states[automaton.initial_id].id], epsilon_closure, new_states)
 
         name_to_id = {}
         id_count = 0
@@ -219,7 +225,7 @@ class FiniteAutomata:
             if(initial_closure_name == name):
                 new_automata.initial_id = id_count
 
-            if (any(item in self.name_to_ids(name) for item in self.final_ids)):
+            if (any(item in FiniteAutomata.name_to_ids(name) for item in automaton.final_ids)):
                 new_automata.final_ids.append(id_count)
 
             name_to_id[name] = id_count
@@ -231,7 +237,7 @@ class FiniteAutomata:
             state = new_automata.states[name_to_id[name]]
 
             for symbol, states in transitions.items():
-                next_name = self.closure_name(states)
+                next_name = FiniteAutomata.closure_name(states)
                 next_id = name_to_id[next_name]
                 next_state = new_automata.states[next_id]
 
@@ -241,13 +247,17 @@ class FiniteAutomata:
 
 
     """
-    A determinização
+        records in new_states the states and its transitions of this automaton determinzed
+        the function recursively calls itself for each state in the transitions of the current
+        state that hasn't been recorded yet
     """
-    def determinization(self, closure, epsilon_closure, new_states):
-        name = self.closure_name(closure)
+    def determinization_recursion(automaton, closure, epsilon_closure, new_states):
+        name = FiniteAutomata.closure_name(closure)
         new_states[name] = {}
+
+        #records the "line" of the state in "closure" parameter in the determinized transition table
         for state_id in closure:    
-            for symbol, next_states in self.states[state_id].transition.items():
+            for symbol, next_states in automaton.states[state_id].transition.items():
                 if symbol == '&':
                     continue
                 if not (symbol in new_states[name]):
@@ -257,24 +267,26 @@ class FiniteAutomata:
                         if not(next_state_in_closure in new_states[name][symbol]):
                             new_states[name][symbol].append(next_state_in_closure)
 
-
+        #calls determinization_recursion for each reacheble state
         for symbol, state_list in new_states[name].items():
-            if not (self.closure_name(state_list) in new_states):
-                self.determinization(state_list, epsilon_closure, new_states)
+            if not (FiniteAutomata.closure_name(state_list) in new_states):
+                FiniteAutomata.determinization_recursion(automaton, state_list, epsilon_closure, new_states)
 
-
-    def closure_name(self, closure):
+    #returns state name given a list of states
+    def closure_name(closure):
         name = ""
         for state_id in closure:
             name = name + 'q' + str(state_id)
 
         return name
 
-    def name_to_ids(self, name):
+    #inverse of closure_name
+    def name_to_ids(name):
         string_ids = name.split("q")
         string_ids.remove('')
         return [int(i) for i in string_ids]
 
+    #returns a map of state_id to its epsilon closure
     def epsilon_closure(self):
         closure = {}
 
@@ -292,44 +304,99 @@ class FiniteAutomata:
                     closure.append(state.id)
                     self.epsilon_closure_of(state.id, closure)
 
-    def is_epsilon(self):
+    #verify deterministic property
+    def is_determnistic(self):
         for state_id, state in self.states.items():
             if ('&' in state.transition):
-                return True
-        return False
+                return False
+        return True
 
-    def unify(automata_1, automata_2):
+    """
+        returns the unification of two given automata
+    """
+    def unify(automaton_1_in, automaton_2_in):
+        automaton_1 = copy.deepcopy(automaton_1_in)
+        automaton_2 = copy.deepcopy(automaton_2_in)
 
-        new_automata = FiniteAutomata()
+        new_automaton = FiniteAutomata()
 
         new_states = {}
         new_final_states = []
+
+
+        new_automaton.states = new_states
+        new_automaton.final_ids = new_final_states
+        new_automaton.initial_id = 0
+
+        """
+            adds a new initial state
+            wich epsilon transit to the initial states
+            of the given automatum
+        """
         inital_state = State(0,"q0")
-
-
-        new_automata.states = new_states
-        new_automata.final_ids = new_final_states
-        new_automata.initial_id = 0
-
-        inital_state.add_transition('&',automata_1.states[automata_1.initial_id])
-        inital_state.add_transition('&',automata_2.states[automata_2.initial_id])
-
+        inital_state.add_transition('&',automaton_1.states[automaton_1.initial_id])
+        inital_state.add_transition('&',automaton_2.states[automaton_2.initial_id])
         new_states[0] = inital_state
 
-        for state_id, state in automata_1.states.items():
+        #changes automaton_1 states ids and names
+        for state_id, state in automaton_1.states.items():
             state.id = state_id+1
+            state.name = "q"+str(state.id)
             new_states[state_id+1] = state
-            if state_id in automata_1.final_ids:
+            if state_id in automaton_1.final_ids:
                 new_final_states.append(state_id+1)
 
-        automata_2_state_count = len(automata_1.states);
-        for state_id, state in automata_2.states.items():
+        #changes automaton_2 states ids and names
+        automata_2_state_count = len(automaton_1.states);
+        for state_id, state in automaton_2.states.items():
             automata_2_state_count += 1
             state.id = automata_2_state_count
+            state.name = "q"+str(state.id)
             new_states[automata_2_state_count] = state
-            if state_id in automata_2.final_ids:
+            if state_id in automaton_2.final_ids:
                 new_final_states.append(automata_2_state_count)
 
-        return new_automata
+        return new_automaton
 
+    """
+        returns the complement of a given automaton
+        if the automaton is non-deterministic, it is first determinized
+    """
+    def complement(automaton):
+
+        if (not automaton.is_determnistic()):
+            new_automaton = FiniteAutomata.determinization(automaton)
+        else:
+            new_automaton = copy.deepcopy(automaton)
+
+
+        state_ids = list(new_automaton.states.keys())
+
+        new_final_ids = [item for item in state_ids if item not in new_automaton.final_ids]
+
+        new_automaton.final_ids = new_final_ids
+
+        return new_automaton
  
+
+    """
+        returns the intersection of two given automata
+        uses de morgan
+    """
+    def intersect(automata_1, automata_2):
+        complement_1 = FiniteAutomata.complement(automata_1)
+        complement_2 = FiniteAutomata.complement(automata_2)
+
+        unification_of_complements = FiniteAutomata.unify(complement_1, complement_2)
+        
+        intesection = FiniteAutomata.complement(unification_of_complements)
+        intesection.renameStates()
+
+        return intesection
+
+    """
+        rename states to q+state_id
+    """
+    def renameStates(self):
+        for state_id, state in self.states.items():
+            state.name = "q"+str(state_id)

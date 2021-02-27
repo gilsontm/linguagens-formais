@@ -40,6 +40,19 @@ def unify_automata():
     json = unified_automata.to_json()
     return json
 
+@app.route("/automata/intersect", methods=["POST"])
+def intersect_automata():
+    automata_1 = FiniteAutomata()
+    automata_2 = FiniteAutomata()
+
+    automata_1.from_json(request.get_json()['automata_1'])
+    automata_2.from_json(request.get_json()['automata_2'])
+
+    intersected_automata = FiniteAutomata.intersect(automata_1, automata_2)
+    json = intersected_automata.to_json()
+    print(json)
+    return json
+
 @app.route("/automata/export", methods=["POST"])
 def export_automata():
     path = get_file_path("automata.txt")
@@ -52,7 +65,7 @@ def export_automata():
 def determinize_automata():
     automata = FiniteAutomata()
     automata.from_json(request.get_json()['automata'])
-    determinized_automata = automata.determinization()
+    determinized_automata = FiniteAutomata.determinization(automata)
     json = determinized_automata.to_json()
     return json
 
