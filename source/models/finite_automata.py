@@ -21,6 +21,7 @@ class FiniteAutomata:
         self.final_ids = []
         #automata as python dict directly from json
         self.json_automata = None
+        
 
 
     """
@@ -511,7 +512,6 @@ class FiniteAutomata:
         self.initial_id = initial_state.id
 
     #define as final state
-    #the state must be in the automaton
     def add_final_state(self, final_state):
         if not(final_state.id in list(self.states.keys())):
             self.states[final_state.id] = final_state
