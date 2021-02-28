@@ -21,6 +21,7 @@ class FiniteAutomata:
         self.final_ids = []
         #automata as python dict directly from json
         self.json_automata = None
+        
 
     """
         Builds this finite automata from a json;
@@ -485,3 +486,43 @@ class FiniteAutomata:
             if(state.name == name):
                 return name
         return None
+
+    #adds state with name
+    #automatic id assignment
+    #returns the added state
+    def add_state(self, name):
+        state_id = max(list(self.states.keys()))+1
+        self.states[state_id] = State(state_id, name)
+        return self.states[state_id]
+
+    #adds transition
+    def add_transition(self, symbol, from_state, to_state):
+        from_state.add_transition(symbol, to_state)
+
+    #get transition
+    def get_transitions(self, symbol, from_state):
+        if (symbol in from_state.transition):
+            return from_state.transition[symbol]
+
+    #set initial state
+    def set_initial_state(self, initial_state)
+        if not(initial_state.id in list(self.states.keys())):
+            self.states[initial_state.id] = initial_state
+        self.initial_id = initial_state.id
+
+    #define as final state
+    #the state must be in the automaton
+    def add_final_state(self, final_state)
+        if not(final_state.id in list(self.states.keys())):
+            self.states[final_state.id] = final_state
+
+        if not(final_state.id in self.final_ids):
+            self.final_ids.append(final_state.id)
+
+    #returns final states list
+    def get_final_states(self):
+        return [self.states[i] for i in self.final_ids]
+
+    #returns final states list
+    def get_initial_state(self):
+        return self.states[self.initial_id]
