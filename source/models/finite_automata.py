@@ -467,8 +467,9 @@ class FiniteAutomata:
     #verify deterministic property
     def is_determnistic(self):
         for state_id, state in self.states.items():
-            if ('&' in state.transition):
-                return False
+            for symbol, states in state.transition:
+                if (symbol == '&' or len(states) > 1):
+                    return False
         return True
 
     #returns alphabet symbol list
@@ -504,12 +505,7 @@ class FiniteAutomata:
     def get_transitions(self, symbol, from_state):
         if (symbol in from_state.transition):
             return from_state.transition[symbol]
-
-    #set initial state
-    def set_initial_state(self, initial_state):
-        if not(initial_state.id in list(self.states.keys())):
-            self.states[initial_state.id] = initial_state
-        self.initial_id = initial_state.id
+        return []
 
     #define as final state
     def add_final_state(self, final_state):
@@ -522,6 +518,12 @@ class FiniteAutomata:
     #returns final states list
     def get_final_states(self):
         return [self.states[i] for i in self.final_ids]
+
+    #set initial state
+    def set_initial_state(self, initial_state):
+        if not(initial_state.id in list(self.states.keys())):
+            self.states[initial_state.id] = initial_state
+        self.initial_id = initial_state.id
 
     #returns final states list
     def get_initial_state(self):
