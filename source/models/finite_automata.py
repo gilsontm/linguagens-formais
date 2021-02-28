@@ -54,11 +54,19 @@ class FiniteAutomata:
 
     """
         Checks if this automata has a initial state, 
-        at least one final state, 
+        if state with id equal to initial_state_id is in states list
+        if has at least one final state, 
+        if every state id in final states id list is in states list
+        and if every state referenced by its states transitions in in the states list
     """
     def valid(self):
-        if (not(self.states) or self.initial_id == None or not(self.initial_id in self.states) or not(self.final_ids)):
+        if not(self.states) or self.initial_id == None or not(self.initial_id in self.states) or not(self.final_ids): or not(all(elem in list(self.states.keys()) for elem in self.final_ids)):
             return False
+
+        for state_id, state in self.states.items():
+            if not(all(elem in list(self.states.values()) for elem in [item for sublist in list(state.transition.values()) for item in sublist])):
+                return False
+
         return True
 
     """
