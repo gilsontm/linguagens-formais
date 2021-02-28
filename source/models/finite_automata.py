@@ -55,10 +55,9 @@ class FiniteAutomata:
     """
         Checks if this automata has a initial state, 
         at least one final state, 
-        and the states ids are on the states dict
     """
     def valid(self):
-        if ((not (self.curr_state_id in self.states)) or self.initial_id == None or len(self.states) == 0 or len(self.final_ids) == 0):
+        if (not(self.states) or self.initial_id == None or not(self.initial_id in self.states) or not(self.final_ids)):
             return False
         return True
 
