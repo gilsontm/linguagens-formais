@@ -60,7 +60,7 @@ class FiniteAutomata:
         and if every state referenced by its states transitions in in the states list
     """
     def valid(self):
-        if not(self.states) or self.initial_id == None or not(self.initial_id in self.states) or not(self.final_ids): or not(all(elem in list(self.states.keys()) for elem in self.final_ids)):
+        if not(self.states) or self.initial_id == None or not(self.initial_id in self.states) or not(self.final_ids) or not(all(elem in list(self.states.keys()) for elem in self.final_ids)):
             return False
 
         for state_id, state in self.states.items():
@@ -170,38 +170,34 @@ class FiniteAutomata:
                 self.json_automata['transitions'].append({"from": from_id, "to": to_state.id, "values": values}) 
         return self.json_automata
 
-    def set_word(self, word):
-        self.word = word
 
-    def set_step(self, step):
-        self.step = step
+    """
+        returns automaton state after transitioning from state with "state_id" 
+        by the character in "step" index of "word" 
+    """
+    def step_forward(self, state_id, step, word):
+        #set curr_state state
+        curr_state_id = self.initial_id
+        if (state_id in self.states):
+            curr_state_id = state_id
 
-    def set_state(self, state_id):
-        if state_id == -1:
-            self.curr_state_id = self.initial_id
-        elif (state_id in self.states):
-            self.curr_state_id = state_id
-
-
-    #step forward once processing word
-    def step_forward(self):
         if (not self.valid()):
             return {"processing":False, "accepted": False, "reason": "invalid"}
 
-        if (len(self.word) == self.step):
-            if (self.curr_state_id in self.final_ids):
+        if (len(word) == step):
+            if (curr_state_id in self.final_ids):
                 return {"processing":False, "accepted": True}
             return {"processing":False, "accepted": False, "reason": "rejected"}
 
-        state = self.states[self.curr_state_id]
-        curr_symbol = self.word[self.step]
+        state = self.states[curr_state_id]
+        curr_symbol = word[step]
         next_states = state.transition.get(curr_symbol)
         next_episilon_states = state.transition.get('&')
         next_state_ids = []
         next_episilon_state_ids = []
 
         if (next_states == None and next_episilon_states == None):
-            return {"processing":False, "accepted": False, "curr_state": self.curr_state_id, "next_states":[]}
+            return {"processing":False, "accepted": False, "curr_state": curr_state_id, "next_states":[]}
         else:
             if (next_states != None):
                 for next_state in next_states:
@@ -211,6 +207,23 @@ class FiniteAutomata:
                     next_episilon_state_ids.append(next_episilon_state.id)
             return {"processing":True, "accepted": False, "next_states": next_state_ids, "next_episilon_states": next_episilon_state_ids}
 
+
+    def fast_run(self,word):
+        step = 0
+        state_id = self.initial_id
+        result = {}
+
+        determinized_automaton = FiniteAutomata.determinize(self)
+
+        while (len(word) >= step):
+            result = self.step_forward(state_id,step,word)
+            if not result["processing"]:
+               break
+
+            step += 1
+            state_id = result["next_states"][0]
+
+        return result
 
     #returns a map of state_id to its epsilon closure
     def epsilon_closure(self):

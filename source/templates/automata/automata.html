@@ -70,6 +70,10 @@
             next_step();
         });
 
+        $(FAST_RUN_BTN).click(() => {
+            fast_run();
+        });
+
         $(RESET_BTN).click(() => {
             reset_automata_state();
         });
@@ -210,6 +214,25 @@
 
             global.branches = new_branches;
             global.branch_count = new_branch_count;
+        }
+
+        function fast_run(){
+                var send = {
+                    word:global.word,
+                    automata: export_automata()
+                };
+
+                $.ajax({
+                    type: 'POST',
+                    url: '/automata/fastrun',
+                    data: JSON.stringify(send),
+                    dataType: 'json',
+                    processData: false,
+                    contentType: 'application/json; charset=utf-8',
+                    success: function(data) {
+                        alert(data.accepted)
+                    }
+                })
         }
 
         function next_step(){
