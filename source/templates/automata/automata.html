@@ -284,7 +284,6 @@
                         processData: false,
                         contentType: 'application/json; charset=utf-8',
                         success: function(data) {
-                            console.log(data);
                             branching(data, curr_branch);
                         }
                     })
@@ -292,6 +291,7 @@
             }
 
             //wait for every request of each branch to be done
+            //stores states in history
             //then updates the branches
             $.when(...requests).done(function(){
                 global.curr_node = {};
@@ -300,13 +300,13 @@
                         global.curr_node[global.branches[i].curr_state] = true;
                 }
                 record_to_history();
-                console.log(global.history);
                 update_nodes();
                 update_branches();
             });
 
         }
 
+        //records states to history
         function record_to_history(){
             var branches = JSON.parse(JSON.stringify(global.branches));
             var branch_count = global.branch_count;
@@ -316,6 +316,7 @@
             global.history_count += 1;
         }
 
+        //retrieve last history entry
         function step_backwards(){
 
             if (global.history_count <=  0){
