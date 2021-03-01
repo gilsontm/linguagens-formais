@@ -35,7 +35,10 @@
             branches: null,
             branch_count: 0,
             processing: true,
-            curr_node: {}
+            curr_node: {},
+
+            history_count: 0,
+            history: []
 
         };
 
@@ -65,6 +68,9 @@
         });
 
 
+        $(STEP_BACKWARDS_BTN).click(() => {
+            step_backwards();
+        });
 
         $(STEP_BTN).click(() => {
             next_step();
@@ -158,6 +164,8 @@
             global.branches = {0:{processing: true, accepted: false, curr_state: -1, curr_step: 0}};
             global.processing = true;
             global.curr_node = {};
+            global.history_count = 0;
+            global.history = [];
             update_nodes();
             update_branches();
 
@@ -291,10 +299,38 @@
                     if (global.branches[i].processing)
                         global.curr_node[global.branches[i].curr_state] = true;
                 }
-                update_nodes()
+                record_to_history();
+                console.log(global.history);
+                update_nodes();
                 update_branches();
             });
 
+        }
+
+        function record_to_history(){
+            var branches = JSON.parse(JSON.stringify(global.branches));
+            var branch_count = global.branch_count;
+            var curr_node = JSON.parse(JSON.stringify(global.curr_node));
+            
+            global.history[global.history_count] = {branches, branch_count, curr_node};
+            global.history_count += 1;
+        }
+
+        function step_backwards(){
+
+            if (global.history_count <=  0){
+                reset_automata_state();
+                return;
+            }
+            var data = global.history[global.history_count-1];
+            global.history_count -= 1;
+
+            global.branches = data.branches;
+            global.branch_count = data.branch_count;
+            global.curr_node = data.curr_node;
+
+            update_nodes();
+            update_branches();
         }
 
 
