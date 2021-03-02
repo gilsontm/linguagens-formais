@@ -476,13 +476,12 @@ class FiniteAutomata:
         closure.sort()
         for state_id in closure:
             name = name +','+ self.states[state_id].name
-
-        return name
+        name = name[1:]
+        return "{"+name+"}"
 
     #inverse of closure_name
     def name_to_ids(self, closure_name):
-        names = closure_name.split(',')
-        names.remove('')
+        names = (closure_name[1:-1]).split(',')
         ids = []
 
         for name in names:
