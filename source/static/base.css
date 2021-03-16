@@ -17,33 +17,22 @@ svg.bi {
     content: "Buscar";
 }
 
-
 .states-container {
-    height: 25vh;
-    overflow-y: hidden;
+    width: 100%;
+    min-height: 15vh;
     overflow-x: scroll;
     white-space: nowrap;
 }
 
 .state-block {
+    width: 15vh;
+    margin: 0 2%;
     display: inline-block;
-    height: calc(100% - 2em);
-    width: 35vh;
-    background-color: whitesmoke;
-    margin: 1em 0 1em 1em;
-    padding: 1em;
-
-    border-radius: 2px;
-
-	border-color: dimgrey;
-	border-width: 4px;
-	border-style: dashed none  none none;
-
+    text-align: center;
 }
 
 .state-block.rejected{
     background-color: tomato;
-
 }
 
 .state-block.accepted{
@@ -54,23 +43,21 @@ svg.bi {
 	border-color: #2b7ce9;
 	border-width: 0.2em;
 	border-style: solid;
-    border-radius: 10vh;
+    border-radius: 100%;
     background-color: #d2e5ff;
-    height: 10vh;
-    width: 10vh;
-
+    height: 8vh;
+    width: 8vh;
+    margin: 1% auto;
     text-align: center;
 	display: flex;
 	justify-content: center;
 	align-content: center;
 	flex-direction: column;
-
 }
 
 .state-block > .state.initial{
 	border-color: #ff8c00;
     background-color: #f2c89b;
-
 }
 
 .state-block > .state.final{
@@ -78,11 +65,9 @@ svg.bi {
 }
 
 .state-block > .word{
-	margin: 2px;
-	padding: 2px;
 	color: dimgrey;
 	font-weight: bold;
     overflow-x: scroll;
-    min-height: 1em;
-    min-width: 1em;
+    min-height: 3em;
+    height: 3em;
 }
