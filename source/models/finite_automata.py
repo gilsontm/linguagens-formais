@@ -295,7 +295,7 @@ class FiniteAutomata:
         new_states[name] = {}
 
         #records the "line" of the state in "closure" parameter in the determinized transition table
-        for state_id in closure:    
+        for state_id in closure:
             for symbol, next_states in automaton.states[state_id].transition.items():
                 if symbol == '&':
                     continue
@@ -364,8 +364,8 @@ class FiniteAutomata:
     """
     def complement(automaton):
 
-        if (not automaton.is_determnistic()):
-            new_automaton = FiniteAutomata.determinization(automaton)
+        if (not automaton.is_deterministic()):
+            new_automaton = FiniteAutomata.determinize(automaton)
         else:
             new_automaton = copy.deepcopy(automaton)
 
@@ -489,10 +489,10 @@ class FiniteAutomata:
         return ids
 
     #verify deterministic property
-    def is_determnistic(self):
+    def is_deterministic(self):
         for state_id, state in self.states.items():
-            for symbol, states in state.transition:
-                if (symbol == '&' or len(states) > 1):
+            for symbol in state.transition:
+                if (symbol == '&' or len(state.transition[symbol]) > 1):
                     return False
         return True
 
