@@ -221,6 +221,7 @@ class FiniteAutomata:
                break
 
             step += 1
+            print(result["next_states"])
             state_id = result["next_states"][0]
 
         return result
@@ -284,12 +285,17 @@ class FiniteAutomata:
 
         """ transforms states names, that are the ids set in a string, 
             to original names set in a string
+            define final_ids
         """
         for state_id, state in new_automata.states.items():
             name_compound = "{"
             states_ids = FiniteAutomata.to_closure_ids(state.name)
+
             for id_string in states_ids:
+                if(int(id_string) in automaton.final_ids and not(state_id in new_automata.final_ids)):
+                    new_automata.final_ids.append(state_id)
                 name_compound += automaton.states[int(id_string)].name + ","
+
             name_compound = name_compound[:-1]
             name_compound += "}"
             state.name = name_compound
