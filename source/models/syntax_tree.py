@@ -12,6 +12,17 @@ class Tree:
 		self.node_from_id = {}
 		self.root = None
 
+	# Retorna o alfabeto na linguagem
+	def get_alphabet(self):
+		alph = set()
+		def add_symbol_to_alph(set_, node):
+			symbol = node.get_symbol()
+			if re.is_operand(symbol):
+				set_.add(symbol)
+		root = self.get_root()
+		root.recursive_call(lambda x: add_symbol_to_alph(alph, x))
+		return alph
+
 	def map_id(self, node, id_):
 		self.node_from_id[id_] = node
 

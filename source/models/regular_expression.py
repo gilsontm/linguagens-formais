@@ -15,9 +15,7 @@ class RegularExpressionBuilder():
 
 	# Função que retorna o peso do operador em uma expressão no formato infixa
 	def __prec(self, c):
-		if c == ',':
-			return 4
-		if c == '*':
+		if c == '*' or c == '?':
 			return 3
 		elif c == '.':
 			return 2
@@ -40,6 +38,46 @@ class RegularExpressionBuilder():
 			else:
 				shortConcatenation = False
 		return new_txt, opcnt
+
+	# Função, resolver extensão de ER, chaves.
+	def __resolve_extension_brackets(self, exp):
+		new_exp = ""
+		length = len(exp)
+		op_cnt = 0
+		i = 0
+		while i < length:
+			ch = exp[i]
+			i += 1
+
+			if re.is_operand(ch):
+				op_cnt += 1
+
+			if ch == '[':
+				bracket = []
+				while i < length:
+					ch = exp[i]
+					i += 1
+					if ch == ']':
+						break
+					if ch == ' ':
+						continue
+					peek = exp[i]
+					if i+2 < length and peek == '-':
+						i += 1
+						a = ord(ch)
+						b = ord(exp[i])
+						if b >= a:
+							for k in range(a, b+1):
+								bracket.append(chr(k))
+						i += 1
+					else:
+						bracket.append(ch)
+				op_cnt += len(bracket)
+				if len(bracket) != 0:
+					new_exp += '(' + ' + '.join(bracket) + ')'
+			else:
+				new_exp += ch
+		return new_exp, op_cnt
 
 	"""
 		Referência: https://www.geeksforgeeks.org/stack-set-2-infix-to-postfix/
@@ -79,6 +117,9 @@ class RegularExpressionBuilder():
 				while stack and self.__prec(ch) <= self.__prec(stack[-1]):
 					c = stack.pop()
 					symbols.append(c)
+				if ch == '?':
+					symbols.append('&')
+					ch = '+'
 				stack.append(ch)
 
 		while stack:
@@ -96,7 +137,6 @@ class RegularExpressionBuilder():
 		for ch in posfix:
 			if ch == ',':
 				ch = '.'
-
 			if re.is_operand(ch):
 				stack.append(TreeNode(symbol=ch, tree=tree, id_=opcnt))
 				opcnt -= 1
@@ -152,7 +192,7 @@ class RegularExpressionBuilder():
 		dfa.add_state(name='q')
 		unmarked_states.add(state)
 		states_d.add(initial_state_name)
-		alphabet = {'a', 'b', '#'}
+		alphabet = tree.get_alphabet()
 
 		while len(unmarked_states) != 0:
 			state = unmarked_states.pop()
@@ -180,6 +220,7 @@ class RegularExpressionBuilder():
 	def build(self, exp):
 		exp = '(' + exp + ') . #'
 		exp, opcnt = self.__insert_concatenation_operator(exp)
+		exp, opcnt = self.__resolve_extension_brackets(exp)
 		postfix = self.__infix_to_postfix(exp)
 		tree = self.__postfix_to_syntax_tree(postfix, opcnt)
 		dfa = self.__create_dfa(tree)
@@ -189,6 +230,8 @@ class RegularExpressionBuilder():
 def main():
 	regex_builder = RegularExpressionBuilder()
 	dfa = regex_builder.build("(a + b)* . (a . b . b)")
+	# dfa = regex_builder.build('(a + b)?')
+	# dfa = regex_builder.build('[a b]* + [a-f]')
 
 if __name__ == "__main__":
 	main()
