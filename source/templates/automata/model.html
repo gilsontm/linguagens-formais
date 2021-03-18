@@ -1,0 +1,86 @@
+{% macro model() %}
+<script type="text/javascript">
+
+    class Automata {
+
+        constructor(id, extra) {
+            this.id = id;
+            this.name = extra ? `Autômato ${id} (${extra})` : `Autômato ${id}`;
+            this.nodes = new vis.DataSet([]);
+            this.edges = new vis.DataSet([]);
+            this.initial_node = null;
+            this.__next_node_id = 0;
+        }
+
+        get_data() {
+            let data = {nodes: this.nodes, edges: this.edges};
+            return data;
+        }
+
+        get_next_node_id() {
+            return this.__next_node_id++;
+        }
+
+        is_node_final(node_id) {
+            let node = this.nodes.get(node_id);
+            return node ? node.final : false;
+        }
+
+        static from_json(index, json, extra) {
+            let automata = new Automata(index, extra);
+            let nodes = json.states;
+            for (let node of nodes) {
+                node.label = node.name;
+                if (node.initial)
+                    automata.initial_node = node.id;
+                delete node.name;
+                delete node.initial;
+            }
+            automata.nodes.add(nodes);
+            automata.update_style();
+            let edges = json.transitions;
+            for (let edge of edges) {
+                edge.literals = edge.values;
+                delete edge.values;
+                edge.label = edge.literals.join("\n");
+            }
+            automata.edges.add(edges);
+            return automata;
+        }
+
+        to_json() {
+            let nodes = this.nodes.get({fields: ["id", "label", "final"]});
+            for (let node of nodes) {
+                node.name = node.label;
+                delete node.label;
+                node.initial = (node.id == this.initial_node);
+            }
+            let edges = this.edges.get({fields: ["from", "to", "literals"]});
+            for (let edge of edges) {
+                edge.values = edge.literals;
+                delete edge.literals;
+            }
+            let automata = {
+                states: nodes,
+                transitions: edges,
+            }
+            return automata;           
+        }
+
+        update_style() {
+            this.nodes.forEach(node_data => {
+                node_data.group = "default";
+                if (node_data.id == this.initial_node && node_data.final)
+                    node_data.group = "both";
+                else if (node_data.id == this.initial_node)
+                    node_data.group = "initial";
+                else if (node_data.final)
+                    node_data.group = "final";
+                if (global.execution.curr_node.hasOwnProperty(node_data.id))
+                    node_data.group = `current_${node_data.group}`;
+                this.nodes.update(node_data);
+            });
+        }
+    }
+</script>
+{% endmacro %}

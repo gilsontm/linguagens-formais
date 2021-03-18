@@ -1,251 +1,118 @@
-{% from 'automata/controls.html' import controls %}
+{% from 'automata/model.html' import model %}
+{% from 'automata/edition.html' import edition %}
+{% from 'automata/execution.html' import execution %}
+{% from 'automata/operation.html' import operation %}
 {% from 'automata/constants.html' import constants %}
-{% from 'automata/modal.html' import node_modal, edge_modal %}
+{% from 'automata/controls.html' import automata_controls %}
 
 {% macro automata(prefix_id='') %}
+
+    {{ constants(prefix_id=prefix_id) }}
+    {{ model() }}
+
     <div class="container">
-        <h2 class="text-center mt-5"> Edição de Autômatos Finitos </h2>
-        {{ controls(prefix_id=prefix_id)}}
-        <div id="{{prefix_id}}-automata-container" class="bg-light border h-50vh"> </div>
-        {{ node_modal(prefix_id=prefix_id) }}
-        {{ edge_modal(prefix_id=prefix_id) }}
+        <h2 class="text-center mt-5"> Autômatos Finitos </h2>
+
+        <nav>
+            <div class="nav nav-tabs" role="tablist">
+                <button type="button" class="btn nav-item nav-link active" role="tab" data-toggle="tab" href="#automata-edition-content"> Edição </button>
+                <button type="button" class="btn nav-item nav-link" role="tab" data-toggle="tab" href="#automata-execution-content"> Execução </button>
+                <button type="button" class="btn nav-item nav-link" role="tab" data-toggle="tab" href="#automata-operation-content"> Operações </button>
+            </div>
+        </nav>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="automata-edition-content" role="tabpanel">
+                {{ automata_controls(prefix_id=prefix_id) }}
+                {{ edition(prefix_id=prefix_id) }}
+            </div>
+            <div class="tab-pane fade" id="automata-execution-content" role="tabpanel">
+                {{ automata_controls(prefix_id=prefix_id) }}
+                {{ execution(prefix_id=prefix_id) }}
+            </div>
+            <div class="tab-pane fade" id="automata-operation-content" role="tabpanel">
+                {{ operation(prefix_id=prefix_id) }}
+            </div>
         </div>
     </div>
 
-    {{ constants(prefix_id=prefix_id) }}
-
     <script type="text/javascript">
+    
         var global = {
-            network: null,
-            options: null,
-            nodes: null,
-            edges: null,
-            initial_node: null,
-            final_nodes: [],
-            next_node_id: 0,
+            edition: {
+                network: null,
+                options: null,
+            },
+
+            execution: {
+                network: null,
+                options: null,
+
+                word: "",
+                branches: null,
+                branch_count: 0,
+                processing: true,
+                curr_node: {},
+
+                history_count: 0,
+                history: []
+            },
+
+            next_automata_id: 2,
+            current_automata: 0,
+            automatas: [new Automata(1)],
         };
 
-        function toggle_edition_mode() {
-            $(BACK_BTN).toggleClass("d-none");
-            $(ADD_NODE_BTN).toggleClass("d-none");
-            $(ADD_EDGE_BTN).toggleClass("d-none");
-        }
-
-        $(ADD_NODE_BTN).click(() => {
-            toggle_edition_mode();        
-            global.network.addNodeMode();
+        $(ADD_AUTOMATA_BTN).click(() => {
+            let index = global.next_automata_id++;
+            global.automatas.push(new Automata(index));
+            populate_automata_select();
+            switch_to_automata(index);
         });
 
-        $(ADD_EDGE_BTN).click(() => {
-            toggle_edition_mode();
-            global.network.addEdgeMode();
+        $(AUTOMATA_SELECT_REACTIVE).change(event => {
+            switch_to_automata($(event.target).val());
         });
 
-        $(BACK_BTN).click(() => {
-            global.network.disableEditMode();
-            toggle_edition_mode();
-        });
-
-        $(REMOVE_BTN).click(() => {
-            global.network.deleteSelected();
-            $(REMOVE_BTN).addClass("d-none");
-        });
-
-        $(document).ready(() => {
-            init_automata($(CONTAINER).get(0));
-        });
-
-        function init_automata(container) {
-            global.nodes = new vis.DataSet([]);
-            global.edges = new vis.DataSet([]);
-
-            global.options = {
-                nodes: {
-                    shape: "circle",
-                    widthConstraint: 50,
-                    borderWidth: 3,
-                    borderWidthSelected: 4,
-                },
-                edges:{
-                    arrows: "to",
-                    color: "#000000"
-                },
-                manipulation: {
-                    enabled: false,
-                    initiallyActive: true,
-                    addNode: add_node,
-                    addEdge: add_edge,
-                    editEdge: false,
-                },
-                physics: {
-                    enabled: false,
-                    barnesHut: {
-                        avoidOverlap: 0,
-                    },
-                    stabilization: true,
-                },
-            };
-
-            global.network = new vis.Network(container, {nodes: global.nodes, edges: global.edges}, global.options);
-            global.network.on("doubleClick", event => {
-                if (event.nodes.length > 0) {
-                    edit_node(global.nodes.get(event.nodes[0]), data => global.nodes.update(data));
-                } else if (event.edges.length > 0) {
-                    edit_edge(global.edges.get(event.edges[0]), data => global.edges.update(data));
-                }
-            });
-            global.network.on("select", event => {
-                if (event.nodes.length || event.edges.length)
-                    $(REMOVE_BTN).removeClass("d-none");
-                else 
-                    $(REMOVE_BTN).addClass("d-none");
-            });
-            global.network.on("stabilized", () => {
-                global.options.physics.enabled = false;
-                global.network.setOptions(global.options);
-            });
+        function populate_automata_select() {
+            $(AUTOMATA_SELECT).html("");
+            for (automata of global.automatas)
+                $(AUTOMATA_SELECT).append($("<option>").val(automata.id).text(automata.name));
         }
 
-        function add_node(node_data, callback) {
-            node_data.id = global.next_node_id;
-            node_data.label = `q${global.next_node_id}`;
-            Object.assign(node_data, DEFAULT);
-            global.next_node_id++;
-            callback(node_data);
-            update_nodes();
-            toggle_edition_mode();
+        function get_current_automata() {
+            return global.automatas[global.current_automata];
         }
 
-        function edit_node(node_data, callback) {
-            delete node_data.x, node_data.y;
-            $(NODE_NAME).val(node_data.label);
-            $(NODE_INITIAL).prop("checked", global.initial_node == node_data.id);
-            $(NODE_FINAL).prop("checked", global.final_nodes.includes(node_data.id));
-            $(NODE_MODAL).one("click.edit", NODE_SAVE, () => {
-                node_data.label = $(NODE_NAME).val();
-                if ($(NODE_INITIAL).prop("checked")) {
-                    global.initial_node = node_data.id;
-                } else {
-                    if (global.initial_node == node_data.id)
-                        global.initial_node = null;
-                }
-                let index = global.final_nodes.findIndex(e => e == node_data.id);
-                if ($(NODE_FINAL).prop("checked")) {
-                    if (index < 0)
-                        global.final_nodes.push(node_data.id);
-                } else {
-                    if (index >= 0)
-                        global.final_nodes.splice(index, 1);
-                }
-                callback(node_data);
-                update_nodes();
-                $(NODE_MODAL).modal("hide");
-            });
-            $(NODE_MODAL).one("hidden.bs.modal.edit", () => $(NODE_MODAL).off(".edit"));
-            $(NODE_MODAL).modal("show");
+        function switch_to_automata(index) {
+            global.current_automata = index - 1;
+            let automata = get_current_automata();
+            $(AUTOMATA_SELECT_REACTIVE).val(index);
+            global.edition.options.physics.enabled = true;
+            global.edition.network.setData(automata.get_data());
+            global.edition.network.setOptions(global.edition.options);
+            global.edition.network.fit();
+
+            reset_automata_state();
+            // global.execution.options.physics.enabled = true;
+            global.execution.network.setData(automata.get_data());
+            // global.execution.network.setOptions(global.execution.options);
+            // global.execution.network.fit();
         }
 
-        function add_edge(edge_data, callback) {
-            let edges = global.edges.get({filter: e => e.from == edge_data.from && e.to == edge_data.to});
-            if (edges.length > 0) {
-                edit_edge(edges[0], (data) => {
-                    global.edges.update(data);
-                    global.network.disableEditMode();
-                    toggle_edition_mode();
-                });
-            } else {
-                edge_data.literals = [];
-                edge_data.smooth = {type: 'curvedCW', roundness: 0.2};
-                edit_edge(edge_data, (data) => {
-                    callback(data);
-                    toggle_edition_mode();
-                });
-            }
-        }
-
-        function edit_edge(edge_data, callback) {
-            populate_edge_modal(edge_data.literals);
-            $(EDGE_MODAL).one("click.edit", EDGE_SAVE, () => {
-                let literals = read_edge_modal();
-                if (literals.length == 0)
-                    literals = ['&'];
-                edge_data.literals = literals;
-                edge_data.label = literals.join('\n');
-                callback(edge_data);
-                $(EDGE_MODAL).modal("hide");
-            });
-            $(EDGE_MODAL).one("hidden.bs.modal.edit", () => $(EDGE_MODAL).off(".edit"));
-            $(EDGE_MODAL).modal("show");
-        }
-
-        function update_nodes() {
-            let group;
-            let ids = global.nodes.getIds();
-            for (id of ids) {
-                if (global.final_nodes.includes(id)) {
-                    if (global.initial_node == id) 
-                        group = BOTH;
-                    else 
-                        group = FINAL;
-                } else if (global.initial_node == id) 
-                    group = INITIAL;
-                else
-                    group = DEFAULT;
-                global.nodes.update({id: id, ...group});
-            }
-        }
-
-        function import_automata(automata) {
-            global.edges.clear();
-            global.nodes.clear();
-            global.final_nodes = [];
-            global.initial_node = null;
-            global.options.physics.enabled = true;
-            global.network.setOptions(global.options);
-            let nodes = automata.states;
-            for (node of nodes) {
-                node.label = node.name;
-                if (node.initial) 
-                    global.initial_node = node.id;
-                if (node.final)
-                    global.final_nodes.push(node.id);
-                delete node.name;
-                delete node.initial;
-                delete node.final;
-            }
-            global.nodes.add(nodes);
-            update_nodes();
-            let edges = automata.transitions;
-            for (edge of edges) {
-                edge.literals = edge.values;
-                delete edge.values;
-                edge.label = edge.literals.join("\n");
-            }
-            global.edges.add(edges);
+        function import_automata(json, extra = "importado") {
+            let index = global.next_automata_id++;
+            let automata = Automata.from_json(index, json, extra);
+            global.automatas.push(automata);
+            populate_automata_select();
+            switch_to_automata(index);
         }
 
         function export_automata() {
-            let nodes = global.nodes.get({
-                fields: ["id", "label"],
-            });
-            for (node of nodes) {
-                node.name = node.label;
-                delete node.label;
-                node.initial = (node.id == global.initial_node);
-                node.final = (global.final_nodes.includes(node.id));
-            }
-            let edges = global.edges.get({
-                fields: ["from", "to", "literals"]
-            });
-            for (edge of edges) {
-                edge.values = edge.literals;
-                delete edge.literals;
-            }
-            let automata = {
-                states: nodes,
-                transitions: edges,
-            }
-            return automata;           
+            let automata = get_current_automata();
+            let json = automata.to_json();
+            return json;
         }
+
     </script>
 {% endmacro %}

@@ -1,0 +1,314 @@
+{% from 'automata/controls.html' import execution_controls %}
+
+{% macro execution(prefix_id='') %}
+    <div>
+        {{ execution_controls(prefix_id=prefix_id) }}
+        <div id="{{prefix_id}}-execution-container" class="bg-light border h-50vh"> </div>
+    
+        <div id="{{prefix_id}}-states-container" class="states-container border bg-light mt-2 "> </div>
+    </div>
+
+    <script type="text/javascript">
+
+        $(document).ready(() => {
+            init_execution_network($(EXECUTION_CONTAINER).get(0));
+            populate_automata_select();
+        });
+
+        function init_execution_network(container) {
+            let automata = get_current_automata();
+            global.execution.options = {
+                nodes: {
+                    shape: "circle",
+                    widthConstraint: 50,
+                    borderWidth: 3,
+                    borderWidthSelected: 4,
+                },
+                edges:{
+                    arrows: "to",
+                    color: "#000000"
+                },
+                groups: {
+                    default: DEFAULT,
+                    initial: INITIAL,
+                    final: FINAL,
+                    both: BOTH,
+                    current_default: CURRENT_DEFAULT,
+                    current_initial: CURRENT_INITIAL,
+                    current_final: CURRENT_FINAL,
+                    current_both: CURRENT_BOTH,
+                },
+                manipulation: false,
+                physics: {
+                    enabled: false,
+                    barnesHut: {
+                        avoidOverlap: 2,
+                    },
+                    stabilization: true,
+                },
+            };
+            global.execution.network = new vis.Network(container, automata.get_data(), global.execution.options);
+            global.execution.network.on("stabilized", () => {
+                global.execution.network.fit();
+                // global.execution.network.storePositions();
+                global.execution.options.physics.enabled = false;
+                global.execution.network.setOptions(global.execution.options);
+            });
+        }
+
+
+        //reset automata state
+        function reset_automata_state(){
+            global.execution.word = $(WORD_FIELD).val();
+            global.execution.branch_count = 1;
+            global.execution.branches = {0:{processing: true, accepted: false, curr_state: -1, curr_step: 0}};
+            global.execution.processing = true;
+            global.execution.curr_node = {};
+            global.execution.history_count = 0;
+            global.execution.history = [];
+            let automata = get_current_automata();
+            automata.update_style();
+            update_branches();
+        }
+
+        const STATE_BLOCK = "<div class='state-block'><div class='state'>q0</div><div class='word'></div></div>";
+
+        //updates branches visual user interface
+        function update_branches(){
+            $(STATES_PANEL).empty();
+            for (var branch = 0; branch < global.execution.branch_count; branch++) {
+                var new_state = $(STATE_BLOCK);
+                new_state.attr("id", "branch-"+branch);
+
+                var curr_state = global.execution.branches[branch].curr_state;
+                var curr_step = global.execution.branches[branch].curr_step;
+
+                var processing = global.execution.branches[branch].processing;
+                var accepted = global.execution.branches[branch].accepted;
+
+                var remaining = global.execution.word.substring(curr_step, global.execution.word.length);
+                
+                let automata = get_current_automata();
+
+                if (curr_state == -1)
+                    curr_state = automata.initial_node;
+
+                if (automata.initial_node == curr_state)
+                    new_state.find('.state').addClass('initial');
+                    
+                if (automata.is_node_final(curr_state)) 
+                    new_state.find('.state').addClass('final');
+
+                if (accepted) 
+                    new_state.addClass('accepted');
+                else if(!processing)
+                    new_state.addClass('rejected');
+
+                new_state.find('.word').text(remaining);
+                new_state.find('.state').text("q"+curr_state);
+
+                $(STATES_PANEL).append(new_state);
+            }
+        }
+
+        //removes failed branches from branches object
+        function remove_failed_branches(){
+            var new_branch_count = 0;
+            var new_branches = {};
+
+            for (var branch = 0; branch < global.execution.branch_count; branch++) {
+                if(global.execution.branches[branch].processing || global.execution.branches[branch].accepted){
+                    new_branches[new_branch_count] = global.execution.branches[branch];
+                    new_branch_count++;
+                }
+            }
+
+            global.execution.branches = new_branches;
+            global.execution.branch_count = new_branch_count;
+        }
+
+        function fast_run(){
+            let automata = get_current_automata();
+            var send = {
+                word: global.execution.word,
+                automata: automata.to_json(),
+            };
+
+            $.ajax({
+                type: 'POST',
+                url: '/automata/fastrun',
+                data: JSON.stringify(send),
+                dataType: 'json',
+                processData: false,
+                contentType: 'application/json; charset=utf-8',
+                success: function(data) {
+                    alert(data.accepted)
+                }
+            })
+        }
+
+        function step_forwards(){
+            remove_failed_branches();
+            //if theres nothing else to process, returns imediatly
+            var curr_branch_count = global.execution.branch_count;
+            if(!global.execution.processing)
+                return;
+
+            global.execution.processing = false;
+
+            //request array
+            var requests = [];
+
+            //request states reached by the consumption of a symbol for each branch
+            //ignores branches that stopped in the last processing
+            for (var branch = 0; branch < curr_branch_count; branch++) {
+                if(!global.execution.branches[branch].processing)
+                    continue;
+
+                global.execution.word = $(WORD_FIELD).val()
+
+                //sends each branch data followed by the automata and the word
+                let automata = get_current_automata();
+                var send = {
+                    configuration: global.execution.branches[branch], 
+                    word:global.execution.word,
+                    automata: automata.to_json(),
+                };
+
+                let curr_branch = branch;
+
+                //stores every request
+                requests.push(
+                    $.ajax({
+                        type: 'POST',
+                        url: '/automata/step',
+                        data: JSON.stringify(send),
+                        dataType: 'json',
+                        processData: false,
+                        contentType: 'application/json; charset=utf-8',
+                        success: function(data) {
+                            branching(data, curr_branch);
+                        }
+                    })
+                );
+            }
+
+            //wait for every request of each branch to be done
+            //stores states in history
+            //then updates the branches
+            $.when(...requests).done(function(){
+                global.execution.curr_node = {};
+                for (var i = 0; i < global.execution.branch_count; i++) {
+                    if (global.execution.branches[i].processing)
+                        global.execution.curr_node[global.execution.branches[i].curr_state] = true;
+                }
+                record_to_history();
+                let automata = get_current_automata();
+                automata.update_style();
+                update_branches();
+            });
+        }
+
+        //records states to history
+        function record_to_history(){
+            var branches = JSON.parse(JSON.stringify(global.execution.branches));
+            var branch_count = global.execution.branch_count;
+            var curr_node = JSON.parse(JSON.stringify(global.execution.curr_node));
+
+            global.execution.history[global.execution.history_count] = {branches, branch_count, curr_node};
+            global.execution.history_count += 1;
+        }
+
+        //retrieve last history entry
+        function step_backwards(){
+
+            if (global.execution.history_count <=  0){
+                reset_automata_state();
+                return;
+            }
+            var data = global.execution.history[global.execution.history_count-1];
+            global.execution.history_count -= 1;
+
+            global.execution.branches = data.branches;
+            global.execution.branch_count = data.branch_count;
+            global.execution.curr_node = data.curr_node;
+
+            let automata = get_current_automata();
+            automata.update_style();
+            update_branches();
+        }
+
+        /*  
+        records the branches reached by a given branch, identified by a branch_id
+        if the branch has finished processing, record the event
+
+        each branch is a JSON in the following format
+            {integer:{processing: boolean, accepted: boolean, curr_state: integer, curr_step: integer}}
+            the property name indicates a branch_id
+            processing indicates if the branch haven't been accepted nor failed
+            accepted indicates if the branch have been accepted or failed
+            curr_state indicates the current state wich the branch is
+            curr_step indicates wich caracter of the word the branch is processing
+
+        overwrites the given branch
+
+        data is a JSON in the following format
+            {processing:boolean , accepted: boolean, next_states: integer array, next_episilon_states:  integer array}
+            processing indicates if the branch haven't been accepted nor failed
+            accepted indicates if the branch have been accepted or failed
+            next_states contains states reached by normal transitions
+            next_episilon_states contains states reached by epsilon transitions
+
+        */
+        function branching(data, branch_id){
+            if(data.processing){
+                global.execution.processing = true;
+                var first = true;
+                var curr_step = global.execution.branches[branch_id].curr_step;
+
+                //records new branches
+                var record_new_branches = (states, step_incrementation) => {
+                    for (var i = 0; i < states.length; i++) {
+                        var state_id = states[i];
+
+                        var new_branch = {
+                            processing: true, 
+                            accepted: false, 
+                            curr_state: state_id, 
+                            curr_step: curr_step+step_incrementation
+                        };
+
+                        if(first){
+                            global.execution.branches[branch_id] = new_branch;
+                            first = false
+                        } else{
+                            global.execution.branches[global.execution.branch_count] = new_branch;
+                            global.execution.branch_count+=1;
+                        }
+                    }
+                }
+
+                //record branches with update in its curr_step
+                record_new_branches(data.next_states, 1);
+
+                
+                //record branches with no update in its curr_step
+                //(reached by epsilon transitions)
+                record_new_branches(data.next_episilon_states, 0);
+
+
+            } else{
+                //records if the branch has stopped and if it has been accepted or not
+                global.execution.branches[branch_id].processing = false;
+                global.execution.branches[branch_id].accepted = data.accepted;
+            }
+        }
+
+        $(FAST_RUN_BTN).click(fast_run);
+        $(RESET_BTN).click(reset_automata_state);
+        $(STEP_FORWARDS_BTN).click(step_forwards);
+        $(STEP_BACKWARDS_BTN).click(step_backwards);
+        $(WORD_FIELD).on('input', reset_automata_state);
+
+    </script>
+{% endmacro %}
