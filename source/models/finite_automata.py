@@ -253,7 +253,7 @@ class FiniteAutomata:
         new_automata = FiniteAutomata()
         new_states = {}
         epsilon_closure = automaton.epsilon_closure()
-        initial_closure_name = automaton.to_closure_string(epsilon_closure[automaton.initial_id])
+        initial_closure_name = FiniteAutomata.to_closure_string(epsilon_closure[automaton.initial_id])
 
         FiniteAutomata.determinization_recursion(automaton, epsilon_closure[automaton.initial_id], epsilon_closure, new_states)
 
@@ -264,7 +264,7 @@ class FiniteAutomata:
             if(initial_closure_name == name):
                 new_automata.initial_id = id_count
 
-            if (any(item in automaton.to_closure_ids(name) for item in automaton.final_ids)):
+            if (any(item in FiniteAutomata.to_closure_ids(name) for item in automaton.final_ids)):
                 new_automata.final_ids.append(id_count)
 
             name_to_id[name] = id_count
@@ -276,14 +276,23 @@ class FiniteAutomata:
             state = new_automata.states[name_to_id[name]]
 
             for symbol, states in transitions.items():
-                next_name = automaton.to_closure_string(states)
+                next_name = FiniteAutomata.to_closure_string(states)
                 next_id = name_to_id[next_name]
                 next_state = new_automata.states[next_id]
 
                 state.add_transition(symbol,next_state)
 
+        """ transforms states names, that are the ids set in a string, 
+            to original names set in a string
+        """
         for state_id, state in new_automata.states.items():
-            state.name = "{"+state.name+"}"
+            name_compound = "{"
+            states_ids = FiniteAutomata.to_closure_ids(state.name)
+            for id_string in states_ids:
+                name_compound += automaton.states[int(id_string)].name + ","
+            name_compound = name_compound[:-1]
+            name_compound += "}"
+            state.name = name_compound
 
         return new_automata
 
@@ -294,7 +303,7 @@ class FiniteAutomata:
         state that hasn't been recorded yet
     """
     def determinization_recursion(automaton, closure, epsilon_closure, new_states):
-        name = automaton.to_closure_string(closure)
+        name = FiniteAutomata.to_closure_string(closure)
         new_states[name] = {}
 
         #records the "line" of the state in "closure" parameter in the determinized transition table
@@ -311,7 +320,7 @@ class FiniteAutomata:
 
         #calls determinization_recursion for each reacheble state
         for symbol, state_list in new_states[name].items():
-            if not (automaton.to_closure_string(state_list) in new_states):
+            if not (FiniteAutomata.to_closure_string(state_list) in new_states):
                 FiniteAutomata.determinization_recursion(automaton, state_list, epsilon_closure, new_states)
 
 
@@ -476,20 +485,16 @@ class FiniteAutomata:
 
 
     #returns state name given a list of states
-    def to_closure_string(self, closure):
+    def to_closure_string(closure):
         name = ""
         closure.sort()
         for state_id in closure:
-            name = name +','+ self.states[state_id].name
+            name = name +','+ str(state_id)
         return name[1:]
 
     #inverse of closure_name
-    def to_closure_ids(self, closure_name):
-        names = closure_name.split(',')
-        ids = []
-        for name in names:
-            ids.append(self.get_state_by_name(name).id)
-        return ids
+    def to_closure_ids(closure_name):
+        return closure_name.split(',')
 
     #verify deterministic property
     def is_deterministic(self):
