@@ -216,12 +216,11 @@ class FiniteAutomata:
         determinized_automaton = FiniteAutomata.determinize(self)
 
         while (len(word) >= step):
-            result = self.step_forward(state_id,step,word)
+            result = determinized_automaton.step_forward(state_id,step,word)
             if not result["processing"]:
                break
 
             step += 1
-            print(result["next_states"])
             state_id = result["next_states"][0]
 
         return result
