@@ -1,18 +1,16 @@
 """
     State class
-    Represents a state, with id name and if its final;
+    Represents a state, with id name and its transitions;
     Stores references for each of its possible next States;
 """
 class State:
-    def __init__(self, id, name, final):
+    def __init__(self, id, name):
         #this state id
         self.id = id
         #name 
         self.name = name
         #map of symbol to next state
         self.transition = {}
-        #final flag
-        self.final = final
 
     """
         Adds a transition to a given State and symbol

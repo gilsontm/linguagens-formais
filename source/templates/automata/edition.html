@@ -1,0 +1,151 @@
+{% from 'automata/controls.html' import edition_controls %}
+{% from 'automata/modal.html' import node_modal, edge_modal %}
+
+{% macro edition(prefix_id='') %}    
+    <div>
+        {{ edition_controls(prefix_id=prefix_id) }}
+        <div id="{{prefix_id}}-edition-container" class="bg-light border h-50vh"> </div>
+        {{ node_modal(prefix_id=prefix_id) }}
+        {{ edge_modal(prefix_id=prefix_id) }}
+    </div>
+
+    <script type="text/javascript">
+
+        $(document).ready(() => {
+            init_edition_network($(EDITION_CONTAINER).get(0));
+            populate_automata_select();
+        });
+
+        function init_edition_network(container) {
+            let automata = get_current_automata();
+            global.edition.options = {
+                nodes: {
+                    shape: "circle",
+                    widthConstraint: 50,
+                    borderWidth: 3,
+                    borderWidthSelected: 4,
+                },
+                edges:{
+                    arrows: "to",
+                    color: "#000000"
+                },
+                groups: {
+                    default: DEFAULT,
+                    initial: INITIAL,
+                    final: FINAL,
+                    both: BOTH,
+                    current_default: DEFAULT,
+                    current_initial: INITIAL,
+                    current_final: FINAL,
+                    current_both: BOTH,
+                },
+                manipulation: {
+                    enabled: false,
+                    initiallyActive: true,
+                    addNode: add_node,
+                    addEdge: add_edge,
+                    editEdge: false,
+                },
+                physics: {
+                    enabled: false,
+                    barnesHut: {
+                        avoidOverlap: 2,
+                    },
+                    stabilization: true,
+                },
+            };
+            global.edition.network = new vis.Network(container, automata.get_data(), global.edition.options);
+            global.edition.network.on("doubleClick", event => {
+                let automata = get_current_automata();
+                if (event.nodes.length > 0) {
+                    edit_node(automata.nodes.get(event.nodes[0]), data => automata.nodes.update(data));
+                } else if (event.edges.length > 0) {
+                    edit_edge(automata.edges.get(event.edges[0]), data => automata.edges.update(data));
+                }
+            });
+            global.edition.network.on("select", event => {
+                if (event.nodes.length || event.edges.length)
+                    $(REMOVE_BTN).removeClass("d-none");
+                else 
+                    $(REMOVE_BTN).addClass("d-none");
+            });
+            global.edition.network.on("stabilized", () => {
+                global.edition.network.fit();
+                global.edition.network.storePositions();
+                global.edition.options.physics.enabled = false;
+                global.edition.network.setOptions(global.edition.options);
+            });
+        }
+
+        function add_node(node_data, callback) {
+            let automata = get_current_automata();
+            let next_node_id = automata.get_next_node_id();
+            node_data.id = next_node_id;
+            node_data.label = `q${next_node_id}`;
+            node_data.final = false;
+            node_data.group = 'default';
+            // Object.assign(node_data, DEFAULT);
+            callback(node_data);
+            automata.update_style();
+            toggle_edition_mode();
+        }
+
+        function edit_node(node_data, callback) {
+            let automata = get_current_automata();
+            delete node_data.x, node_data.y;
+            $(NODE_NAME).val(node_data.label);
+            $(NODE_INITIAL).prop("checked", automata.initial_node == node_data.id);
+            $(NODE_FINAL).prop("checked", node_data.final);
+            $(NODE_MODAL).one("click.edit", NODE_SAVE, () => {
+                node_data.label = $(NODE_NAME).val();
+                node_data.final = $(NODE_FINAL).prop("checked");
+                if ($(NODE_INITIAL).prop("checked")) {
+                    automata.initial_node = node_data.id;
+                } else {
+                    if (automata.initial_node == node_data.id)
+                        automata.initial_node = null;
+                }
+                callback(node_data);
+                automata.update_style();
+                $(NODE_MODAL).modal("hide");
+            });
+            $(NODE_MODAL).one("hidden.bs.modal.edit", () => $(NODE_MODAL).off(".edit"));
+            $(NODE_MODAL).modal("show");
+        }
+
+        function add_edge(edge_data, callback) {
+            let automata = get_current_automata();
+            let edges = automata.edges.get({filter: e => e.from == edge_data.from && e.to == edge_data.to});
+            if (edges.length > 0) {
+                edit_edge(edges[0], (data) => {
+                    automata.edges.update(data);
+                    global.edition.network.disableEditMode();
+                    toggle_edition_mode();
+                });
+            } else {
+                edge_data.literals = [];
+                edge_data.smooth = {type: 'curvedCW', roundness: 0.2};
+                edit_edge(edge_data, (data) => {
+                    callback(data);
+                    toggle_edition_mode();
+                });
+            }
+        }
+
+        function edit_edge(edge_data, callback) {
+            populate_edge_modal(edge_data.literals);
+            $(EDGE_MODAL).one("click.edit", EDGE_SAVE, () => {
+                let literals = read_edge_modal();
+                if (literals.length == 0)
+                    literals = ['&'];
+                edge_data.literals = literals;
+                edge_data.label = literals.join('\n');
+                callback(edge_data);
+                $(EDGE_MODAL).modal("hide");
+            });
+            $(EDGE_MODAL).one("hidden.bs.modal.edit", () => $(EDGE_MODAL).off(".edit"));
+            $(EDGE_MODAL).modal("show");
+        }
+
+    </script>
+{% endmacro %}

@@ -26,8 +26,8 @@
                 $(IMPORT_MODAL).one("click.import", IMPORT_MODAL_SAVE, () => {
                     let form = new FormData();
                     form.append("file", $(IMPORT_MODAL_FILE).prop("files")[0]);
-                    callback(form);
                     $(IMPORT_MODAL).modal("hide");
+                    callback(form);
                 });
                 $(IMPORT_MODAL).one("hidden.bs.modal.import", () => $(IMPORT_MODAL).off(".import"));
                 $(IMPORT_MODAL).modal("show");

@@ -1,7 +1,9 @@
 {% macro constants(prefix_id='') %}
 <script type="text/javascript">
     // network container
-    const CONTAINER = "#{{prefix_id}}-automata-container";
+    const EDITION_CONTAINER = "#{{prefix_id}}-edition-container";
+    const EXECUTION_CONTAINER = "#{{prefix_id}}-execution-container";
+    const STATES_PANEL = "#{{prefix_id}}-states-container"
 
     // node modal
     const NODE_MODAL = "#{{prefix_id}}-node-modal";
@@ -15,17 +17,39 @@
     const EDGE_SAVE = "#{{prefix_id}}-edge-modal-save";
     const EDGE_INPUT = "#{{prefix_id}}-edge-modal-input";
 
+    const ADD_AUTOMATA_BTN = ".{{prefix_id}}-add-automata";
+    const AUTOMATA_SELECT = ".{{prefix_id}}-automata-select";
+    const AUTOMATA_SELECT_REACTIVE = ".{{prefix_id}}-automata-select-reactive";
+
     // controls
-    const BACK_BTN = "#{{prefix_id}}-back"
-    const REMOVE_BTN = "#{{prefix_id}}-remove"
-    const ADD_NODE_BTN = "#{{prefix_id}}-add-node"
-    const ADD_EDGE_BTN = "#{{prefix_id}}-add-edge"
+    const BACK_BTN = "#{{prefix_id}}-back";
+    const REMOVE_BTN = "#{{prefix_id}}-remove";
+    const ADD_NODE_BTN = "#{{prefix_id}}-add-node";
+    const ADD_EDGE_BTN = "#{{prefix_id}}-add-edge";
+
+    const STEP_BACKWARDS_BTN = "#{{prefix_id}}-step-backwards";
+    const STEP_FORWARDS_BTN = "#{{prefix_id}}-step";
+    const FAST_RUN_BTN = "#{{prefix_id}}-fast-run";
+    const RESET_BTN = "#{{prefix_id}}-reset-state";
+    const WORD_FIELD = "#{{prefix_id}}-word";
+
+    const UNIFY_BTN = "#{{prefix_id}}-unify";
+    const MINIMIZE_BTN = "#{{prefix_id}}-minimize";
+    const INTERSECT_BTN = "#{{prefix_id}}-intersect";
+    const DETERMINIZE_BTN = "#{{prefix_id}}-determinize";
+
+    const OPERAND_1 = "#{{prefix_id}}-operand-1";
+    const OPERAND_2 = "#{{prefix_id}}-operand-2";
 
     // colors
     const DEFAULT_COLOR_1 = "#2b7ce9";
     const DEFAULT_COLOR_2 = "#d2e5ff";
     const ALTERNATE_COLOR_1 = "#ff8c00";
     const ALTERNATE_COLOR_2 = "#f2c89b";
+    const CURRENT_COLOR_1 = "#19529e";
+    const CURRENT_COLOR_2 = "#7995ba";
+    const CURRENT_ALTERNATE_COLOR_1 = "#b36200";
+    const CURRENT_ALTERNATE_COLOR_2 = "#b58f65";
     
     // states
     const DEFAULT = {
@@ -38,6 +62,62 @@
             highlight: {
                 border: DEFAULT_COLOR_1,
                 background: DEFAULT_COLOR_2,
+            },
+        },
+    };
+
+    const CURRENT_DEFAULT = {
+        shapeProperties : {
+            borderDashes: false,
+        },
+        color: {
+            border: CURRENT_COLOR_1,
+            background: CURRENT_COLOR_2,
+            highlight: {
+                border: CURRENT_COLOR_1,
+                background: CURRENT_COLOR_2,
+            },
+        },
+    };
+
+    const CURRENT_INITIAL = {
+        shapeProperties : {
+            borderDashes: false,
+        },
+        color : {
+            border: CURRENT_ALTERNATE_COLOR_1,
+            background: CURRENT_ALTERNATE_COLOR_2,
+            highlight: {
+                border: CURRENT_ALTERNATE_COLOR_1,
+                background: CURRENT_ALTERNATE_COLOR_2,
+            }
+        }
+    };
+
+    const CURRENT_FINAL = {
+        shapeProperties : {
+            borderDashes: [5, 2],
+        },
+        color: {
+            border: CURRENT_COLOR_1,
+            background: CURRENT_COLOR_2,
+            highlight: {
+                border: CURRENT_COLOR_1,
+                background: CURRENT_COLOR_2,
+            },
+        },
+    };
+
+    const CURRENT_BOTH = {
+        shapeProperties : {
+            borderDashes: [5, 2],
+        },
+        color : {
+            border: CURRENT_ALTERNATE_COLOR_1,
+            background: CURRENT_ALTERNATE_COLOR_2,
+            highlight: {
+                border: CURRENT_ALTERNATE_COLOR_1,
+                background: CURRENT_ALTERNATE_COLOR_2,
             },
         },
     };
@@ -58,7 +138,7 @@
 
     const FINAL = {
         shapeProperties : {
-            borderDashes: [15, 5],
+            borderDashes: [5, 2],
         },
         color: {
             border: DEFAULT_COLOR_1,
@@ -72,7 +152,7 @@
 
     const BOTH = {
         shapeProperties : {
-            borderDashes: [15, 5],
+            borderDashes: [5, 2],
         },
         color : {
             border: ALTERNATE_COLOR_1,

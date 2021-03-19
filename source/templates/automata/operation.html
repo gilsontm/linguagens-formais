@@ -1,0 +1,61 @@
+{% from 'automata/controls.html' import operation_controls %}
+
+{% macro operation(prefix_id='') %}
+
+
+    <div>
+        {{ operation_controls(prefix_id=prefix_id) }}
+        <div>
+            <div class="input-group my-2">
+                <div class="input-group-prepend">
+                    <label class="input-group-text"> Operando 1 </label>
+                </div>
+                <select id="{{prefix_id}}-operand-1" class="custom-select {{prefix_id}}-automata-select"> </select>
+            </div>
+
+            <div class="input-group my-2">
+                <div class="input-group-prepend">
+                    <label class="input-group-text"> Operando 2 </label>
+                </div>
+                <select id="{{prefix_id}}-operand-2" class="custom-select {{prefix_id}}-automata-select"> </select>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript"> 
+
+        function get_single_data() {
+            let index = $(OPERAND_1).val();
+            let data = {automata: global.automatas[index - 1].to_json()};
+            return data;
+        }
+
+        function get_double_data() {
+            let index_1 = $(OPERAND_1).val();
+            let index_2 = $(OPERAND_2).val();
+            let data = {
+                automata_1: global.automatas[index_1 - 1].to_json(),
+                automata_2: global.automatas[index_2 - 1].to_json(),
+            }
+            return data;
+        }
+
+        function operate(operation, data, extra) {
+            console.log(data);
+            $.ajax({
+                type: "POST",
+                url: `/automata/${operation}`,
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                success: res => {console.log(res); import_automata(res, extra);},
+            });
+        }
+
+        $(UNIFY_BTN).click(() => operate("unify", get_double_data(), "união"));
+        $(MINIMIZE_BTN).click(() => operate("minimize", get_single_data(), "minimizado"));
+        $(INTERSECT_BTN).click(() => operate("intersect", get_double_data(), "intersecção"));
+        $(DETERMINIZE_BTN).click(() => operate("determinize", get_single_data(), "determinizado"));
+
+    </script> 
+
+{% endmacro %}
