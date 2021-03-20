@@ -22,3 +22,9 @@ class State:
         if not (symbol in self.transition):
             self.transition[symbol] = []
         self.transition[symbol].append(state)
+
+    """
+        Returns name of state
+    """
+    def get_name(self):
+        return self.name

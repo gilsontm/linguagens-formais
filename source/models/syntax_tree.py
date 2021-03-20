@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
-import re_utils as re
+import models.re_utils as re
 
 class Tree:
 	"""

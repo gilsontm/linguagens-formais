@@ -1,9 +1,9 @@
 from abc import ABCMeta, abstractmethod
 
-from syntax_tree import Tree, TreeNode
-import re_utils as re
-from finite_automata import FiniteAutomata
-from state import State 
+from models.syntax_tree import Tree, TreeNode
+import models.re_utils as re
+from models.finite_automata import FiniteAutomata
+from models.state import State
 
 class RegularExpressionBuilder():
 
@@ -158,12 +158,15 @@ class RegularExpressionBuilder():
 		return tree
 
 	def __state_string(self, positions):
-		name = ",q".join(str(i) for i in positions)
-		name = 'q' + name
+		if len(positions) != 0:
+			name = '[q' + ",q".join(str(i) for i in positions) + ']'
+		else:
+			name = ''
 		return name
 
 	def __positions_integer(self, name):
-		if len(name) != 0:
+		if len(name) > 3:
+			name = name[1:-1:]
 			aux = name.replace('q', '')
 			aux = aux.split(',')
 			aux = [int(nstr) for nstr in aux]
@@ -189,7 +192,7 @@ class RegularExpressionBuilder():
 			node = tree.get_node(p)
 			if node.get_symbol() == '#':
 				dfa.add_final_state(state)
-		dfa.add_state(name='q')
+		dfa.add_state(name=self.__state_string([]))
 		unmarked_states.add(state)
 		states_d.add(initial_state_name)
 		alphabet = tree.get_alphabet()
@@ -226,13 +229,3 @@ class RegularExpressionBuilder():
 		dfa = self.__create_dfa(tree)
 		print(dfa.to_json())
 		return dfa
-
-def main():
-	regex_builder = RegularExpressionBuilder()
-	dfa = regex_builder.build("(a + b)* . (a . b . b)")
-	# dfa = regex_builder.build('(a + b)?')
-	# dfa = regex_builder.build('[a b]* + [a-f]')
-
-if __name__ == "__main__":
-	main()
-

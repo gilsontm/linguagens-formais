@@ -530,7 +530,7 @@ class FiniteAutomata:
     #automatic id assignment
     #returns the added state
     def add_state(self, name):
-        state_id = max(list(self.states.keys()))+1
+        state_id = max(list(self.states.keys()) + [0])+1
         self.states[state_id] = State(state_id, name)
         return self.states[state_id]
 
