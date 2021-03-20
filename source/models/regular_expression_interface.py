@@ -5,7 +5,7 @@ import models.re_utils as re
 from models.finite_automata import FiniteAutomata
 from models.state import State
 
-class RegularExpressionBuilder():
+class RegularExpressionInterface():
 
 	def __init__(self):
 		pass
@@ -37,6 +37,8 @@ class RegularExpressionBuilder():
 				opcnt += 1
 			else:
 				shortConcatenation = False
+			if ch == '?':
+				opcnt += 1
 		return new_txt, opcnt
 
 	# Função, resolver extensão de ER, chaves.
@@ -49,7 +51,7 @@ class RegularExpressionBuilder():
 			ch = exp[i]
 			i += 1
 
-			if re.is_operand(ch):
+			if re.is_operand(ch) or ch == '?':
 				op_cnt += 1
 
 			if ch == '[':
@@ -220,12 +222,11 @@ class RegularExpressionBuilder():
 				dfa.add_transition(symbol=a, from_state=state, to_state=new_state)
 		return dfa
 
-	def build(self, exp):
+	def build_dfa(self, exp):
 		exp = '(' + exp + ') . #'
 		exp, opcnt = self.__insert_concatenation_operator(exp)
 		exp, opcnt = self.__resolve_extension_brackets(exp)
 		postfix = self.__infix_to_postfix(exp)
 		tree = self.__postfix_to_syntax_tree(postfix, opcnt)
 		dfa = self.__create_dfa(tree)
-		print(dfa.to_json())
 		return dfa

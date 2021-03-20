@@ -4,7 +4,7 @@ from flask import *
 from models.regex import Regex
 from models.grammar import Grammar
 from models.finite_automata import FiniteAutomata
-
+from models.regular_expression_interface import RegularExpressionInterface
 import requests
 
 app = Flask(__name__)
@@ -117,3 +117,12 @@ def export_regex():
     regex = Regex.from_json(request.get_json())
     regex.to_file(path)
     return send_file(path, mimetype="text/plain")
+
+@app.route("/regex/convert_dfa", methods=["POST"])
+def convert_regex_to_dfa():
+    regex = Regex.from_json(request.get_json())
+    absolute_exp = regex.unify_expressions()
+    regex_interface = RegularExpressionInterface()
+    dfa = regex_interface.build_dfa(absolute_exp)
+    dfa_json = dfa.to_json()
+    return json

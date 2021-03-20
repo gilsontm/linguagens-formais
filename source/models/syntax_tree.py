@@ -17,7 +17,7 @@ class Tree:
 		alph = set()
 		def add_symbol_to_alph(set_, node):
 			symbol = node.get_symbol()
-			if re.is_operand(symbol):
+			if re.is_operand(symbol) and symbol != '&' and symbol != '#':
 				set_.add(symbol)
 		root = self.get_root()
 		root.recursive_call(lambda x: add_symbol_to_alph(alph, x))
