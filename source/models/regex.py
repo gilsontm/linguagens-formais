@@ -8,7 +8,11 @@ class Regex:
 
     @staticmethod
     def from_json(json):
-        return Regex(json["expressions"])
+        json_expressions = json["expressions"]
+        expressions = {}
+        for pair in json_expressions:
+            expressions = dict(expressions, **pair)
+        return Regex(expressions)
     
     @staticmethod
     def from_file(path):
@@ -30,9 +34,8 @@ class Regex:
 
     def to_file(self, path):
         with open(path, "w") as f:
-            for expression in self.expressions:
-                for key in expression:
-                    f.write(f"{key} <- {expression[key]};\n")
+            for var in self.expressions:
+                f.write(f"{var} <- {self.expressions[var]};\n")
 
     def __add_depended_by(self, var, depended_by_this):
         if var not in self.depended_by:
@@ -71,7 +74,7 @@ class Regex:
     def __resolve_dependencies(self, var):
         exp = self.expressions[var]
         begin_separators = [' ', '(', '+', '.']
-        end_separators = [' ', ')', '+', '.', '*']
+        end_separators = [' ', ')', '+', '.', '*', '?']
 
         # Precisa ter certeza que nada além desta variável seja
         # substituído. AMOR não deve editar a variável AMORA
@@ -121,7 +124,7 @@ class Regex:
         self.__define_dependencies()
         order = self.__topological_order()
         if unify_on_this is None:
-            unify_expressions = order[-1]
+            unify_on_this = order[-1]
         for var in order:
             self.__resolve_dependencies(var)
         return self.expressions[unify_on_this]

@@ -190,10 +190,9 @@ class RegularExpressionInterface():
 		state = dfa.add_state(name=initial_state_name)
 		dfa.set_initial_state(state)
 		p_list = self.__positions_integer(initial_state_name)
-		for p in p_list:
-			node = tree.get_node(p)
-			if node.get_symbol() == '#':
-				dfa.add_final_state(state)
+		final = not(all(tree.get_node(p).get_symbol() != '#' for p in p_list))
+		if final:
+			dfa.add_final_state(state)
 		dfa.add_state(name=self.__state_string([]))
 		unmarked_states.add(state)
 		states_d.add(initial_state_name)
@@ -205,6 +204,7 @@ class RegularExpressionInterface():
 			p_list = self.__positions_integer(name)
 			for a in alphabet:
 				u = set()
+				final = False
 				for p in p_list:
 					node = tree.get_node(p)
 					if node.get_symbol() == a:
@@ -212,10 +212,11 @@ class RegularExpressionInterface():
 						u = u.union(follow_pos)
 				u_name = self.__state_string(u)
 				if len(u) != 0 and u_name not in states_d:
+					final = not(all(tree.get_node(i).get_symbol() != '#' for i in u))
 					new_state = dfa.add_state(u_name)
 					unmarked_states.add(new_state)
 					states_d.add(u_name)
-					if a == '#':
+					if final:
 						dfa.add_final_state(new_state)
 				else:
 					new_state = dfa.get_state_by_name(u_name)

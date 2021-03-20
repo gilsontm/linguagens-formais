@@ -2,7 +2,7 @@ import requests
 from flask import *
 from utils.path import get_file_path
 from models.regex import Regex
-
+from models.regular_expression_interface import RegularExpressionInterface
 
 blueprint = Blueprint("regex", __name__)
 
@@ -32,6 +32,7 @@ class RegexHandler:
         dfa = regex_interface.build_dfa(absolute_exp)
         path = get_file_path("automata.txt")
         valid = dfa.to_file(path)
+        print('IS VALID:', valid)
         if valid:
             return send_file(path, mimetype="text/plain")
         return None
