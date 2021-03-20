@@ -60,7 +60,7 @@
     <div class="position-fixed top-0 right-0 p-3" style="z-index: 5; right: 0; top: 0;">
         <div id="error-toast" role="alert" class="toast" data-autohide="false">
             <div class="toast-header px-3">
-                <h4 id="error-toast-title" class="text-dark my-2 mr-5"> </h4> 
+                <h4 id="error-toast-title" class="text-dark my-2 mr-5"> </h4>
                 <button type="button" class="ml-auto mb-1 close" data-dismiss="toast">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -70,7 +70,7 @@
             </div>
         </div>
     </div>
-    
+
 
     {% from 'menu/modal.html' import import_modal %}
     {{ import_modal(prefix_id='1') }}
@@ -112,8 +112,8 @@
             let data = export_regex();
             if (data)
                 post_export("/regex/export", JSON.stringify(data), "regex.txt")
-            else 
-                show_error({status: ""}, "Expressão inválida não pode ser exportada.")
+            else
+                show_error(null, "Expressão inválida não pode ser exportada.")
         });
 
         function post_import(url, data, success) {
@@ -148,7 +148,7 @@
         }
 
         function show_error(res, message) {
-            $(ERROR_TOAST_TITLE).html(`Erro ${res.status}`);
+            $(ERROR_TOAST_TITLE).html(`Erro ${res ? res.status : ""}`);
             $(ERROR_TOAST_BODY).html(message ? message : "A operação não pôde ser concluída.");
             $(ERROR_TOAST).toast("show");
         }

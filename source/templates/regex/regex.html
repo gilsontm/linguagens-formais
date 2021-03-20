@@ -1,7 +1,17 @@
 {% macro regex(prefix_id='') %}
     <div class="container">
         <h2 class="text-center mt-5"> Edição de Expressões Regulares </h2>
-        <div class="row my-4">
+
+        <div class="input-group w-100 my-3">
+            <button id="{{prefix_id}}-regex-to-automata" class="btn mr-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-hammer" viewBox="0 0 20 20">
+                    <path d="M9.972 2.508a.5.5 0 0 0-.16-.556l-.178-.129a5.009 5.009 0 0 0-2.076-.783C6.215.862 4.504 1.229 2.84 3.133H1.786a.5.5 0 0 0-.354.147L.146 4.567a.5.5 0 0 0 0 .706l2.571 2.579a.5.5 0 0 0 .708 0l1.286-1.29a.5.5 0 0 0 .146-.353V5.57l8.387 8.873A.5.5 0 0 0 14 14.5l1.5-1.5a.5.5 0 0 0 .017-.689l-9.129-8.63c.747-.456 1.772-.839 3.112-.839a.5.5 0 0 0 .472-.334z"/>
+                  </svg>
+                Converter para autômato
+            </button>
+        </div>
+
+        <div class="row my-3">
             <div class="col-6">
                 <h5 class="text-center"> Caixa de texto </h5>
                 <textarea id="{{prefix_id}}-input-regex" class="bg-light border w-100 h-50vh p-3" style="resize: none;"></textarea>
@@ -19,16 +29,20 @@
     <script>
         const INPUT_REGEX = "#{{prefix_id}}-input-regex";
         const STYLED_REGEX = "#{{prefix_id}}-styled-regex";
-        const VALIDATION_REGEX = "#{{prefix_id}}-validation-regex"
+        const VALIDATION_REGEX = "#{{prefix_id}}-validation-regex";
+        const CONVERT_REGEX_BTN = "#{{prefix_id}}-regex-to-automata";
+
 
         $(INPUT_REGEX).keyup(() => {
             let text = $(INPUT_REGEX).val();
             $(STYLED_REGEX).html(apply_color(text));
             if (validate(text))
                 $(VALIDATION_REGEX).addClass("d-none");
-            else 
+            else
                 $(VALIDATION_REGEX).removeClass("d-none");
         });
+
+        $(CONVERT_REGEX_BTN).click(convert_regex_to_automata);
 
         const REGEX_CLASSES = {
             TEXT: e => `<span class="text-dark">${e}</span>`,
@@ -38,7 +52,7 @@
             VARIABLE: e => `<span class="text-warning">${e}</span>`,
             PARENTHESIS: e => `<span class="text-success">${e}</span>`,
         };
-        
+
         function apply_color(text) {
             let parsed = text;
             parsed = parsed.replace(/(<-)/g, REGEX_CLASSES.ASSIGN);
@@ -60,6 +74,8 @@
             parsed = parsed.replace(/(\+|\.)/g, "+");
             let lines = parsed.split("\n");
             lines = lines.filter(e => e);
+            if (lines.length == 0)
+                return false;
             for (i in lines) {
                 if (lines[i].length < 4)
                     return false;
@@ -76,7 +92,7 @@
                     line = line.replace(/\(a\)/g, "a"); //  (a) --> a
                     line = line.replace(/a\*/g, "a");   //   a* --> a
                 } while (length > line.length);
-                if (line != "a") 
+                if (line != "a")
                     return false;
             }
             return true;
@@ -97,6 +113,23 @@
             if (validate(text))
                 return format_regex_json(text);
             return false;
+        }
+
+        function convert_regex_to_automata() {
+            let text = $(INPUT_REGEX).val();
+            if (validate(text)) {
+                let json = format_regex_json(text);
+                $.ajax({
+                    type: "POST",
+                    url: `/regex/to_automata`,
+                    data: JSON.stringify(json),
+                    contentType: "application/json",
+                    success: res => download(res, "automata.txt"),
+                    error: res => show_error(res),
+                });
+            } else {
+                show_error(null, "Expressão inválida não pode ser convertida.");
+            }
         }
 
         function format_regex_json(text) {

@@ -2,7 +2,6 @@
 
 {% macro operation(prefix_id='') %}
 
-
     <div>
         {{ operation_controls(prefix_id=prefix_id) }}
         <div>
@@ -22,7 +21,7 @@
         </div>
     </div>
 
-    <script type="text/javascript"> 
+    <script type="text/javascript">
 
         function get_single_data() {
             let index = $(OPERAND_1).val();
@@ -56,6 +55,6 @@
         $(INTERSECT_BTN).click(() => operate("intersect", get_double_data(), "intersecção"));
         $(DETERMINIZE_BTN).click(() => operate("determinize", get_single_data(), "determinizado"));
 
-    </script> 
+    </script>
 
 {% endmacro %}

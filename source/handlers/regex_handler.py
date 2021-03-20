@@ -23,3 +23,15 @@ class RegexHandler:
         regex = Regex.from_json(request.get_json())
         regex.to_file(path)
         return send_file(path, mimetype="text/plain")
+
+    @blueprint.route("/to_automata", methods=["POST"])
+    def convert_regex_to_dfa():
+        regex = Regex.from_json(request.get_json())
+        absolute_exp = regex.unify_expressions()
+        regex_interface = RegularExpressionInterface()
+        dfa = regex_interface.build_dfa(absolute_exp)
+        path = get_file_path("automata.txt")
+        valid = dfa.to_file(path)
+        if valid:
+            return send_file(path, mimetype="text/plain")
+        return None
