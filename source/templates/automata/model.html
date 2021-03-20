@@ -36,6 +36,7 @@
                 delete node.name;
                 delete node.initial;
             }
+            automata.__next_node_id = nodes.length;
             automata.nodes.add(nodes);
             automata.update_style();
             let edges = json.transitions;
@@ -43,6 +44,7 @@
                 edge.literals = edge.values;
                 delete edge.values;
                 edge.label = edge.literals.join("\n");
+                edge.smooth = {type: 'curvedCW', roundness: 0.2};
             }
             automata.edges.add(edges);
             return automata;
@@ -64,7 +66,7 @@
                 states: nodes,
                 transitions: edges,
             }
-            return automata;           
+            return automata;
         }
 
         update_style() {
@@ -81,6 +83,34 @@
                 this.nodes.update(node_data);
             });
         }
+
+        update_positions() {
+            let id;
+            let x, y;
+            let node_data;
+            let coordinates;
+            let ids = this.nodes.getIds();
+            for (let n in ids) {
+                n = parseInt(n);
+                coordinates = this.__get_spiral_coordinates(n+1);
+                x = coordinates[0] * 150;
+                y = coordinates[1] * 150;
+                this.nodes.update({id: ids[n], x: x, y: y});
+            }
+        }
+
+        __get_spiral_coordinates(n) {
+            // https://upload.wikimedia.org/wikipedia/commons/1/1d/Ulam_spiral_howto_all_numbers.svg
+            let k, t, m;
+            k = Math.ceil((Math.sqrt(n)-1)/2);
+            t = 2*k;
+            m = (t+1) * (t+1);
+            if (n >= m - t) return [ k-(m-n), -k]; m -= t;
+            if (n >= m - t) return [-k, -k+(m-n)]; m -= t;
+            if (n >= m - t) return [-k+(m-n),  k];
+            return [k,k-(m-n-t)];
+        }
+
     }
 </script>
 {% endmacro %}

@@ -37,7 +37,7 @@
     </div>
 
     <script type="text/javascript">
-    
+
         var global = {
             edition: {
                 network: null,
@@ -74,6 +74,11 @@
             switch_to_automata($(event.target).val());
         });
 
+        $("button[data-toggle='tab']").on("shown.bs.tab", event => {
+            global.edition.network.fit();
+            global.execution.network.fit();
+        });
+
         function populate_automata_select() {
             $(AUTOMATA_SELECT).html("");
             for (automata of global.automatas)
@@ -88,16 +93,11 @@
             global.current_automata = index - 1;
             let automata = get_current_automata();
             $(AUTOMATA_SELECT_REACTIVE).val(index);
-            global.edition.options.physics.enabled = true;
+            automata.update_positions();
             global.edition.network.setData(automata.get_data());
-            global.edition.network.setOptions(global.edition.options);
-            global.edition.network.fit();
-
-            reset_automata_state();
-            // global.execution.options.physics.enabled = true;
             global.execution.network.setData(automata.get_data());
-            // global.execution.network.setOptions(global.execution.options);
-            // global.execution.network.fit();
+            disable_edition_mode();
+            reset_automata_state();
         }
 
         function import_automata(json, extra = "importado") {
@@ -113,6 +113,8 @@
             let json = automata.to_json();
             return json;
         }
+
+
 
     </script>
 {% endmacro %}

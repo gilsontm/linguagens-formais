@@ -4,7 +4,7 @@
     <div>
         {{ execution_controls(prefix_id=prefix_id) }}
         <div id="{{prefix_id}}-execution-container" class="bg-light border h-50vh"> </div>
-    
+
         <div id="{{prefix_id}}-states-container" class="states-container border bg-light mt-2 "> </div>
     </div>
 
@@ -39,21 +39,9 @@
                     current_both: CURRENT_BOTH,
                 },
                 manipulation: false,
-                physics: {
-                    enabled: false,
-                    barnesHut: {
-                        avoidOverlap: 2,
-                    },
-                    stabilization: true,
-                },
+                physics: false,
             };
             global.execution.network = new vis.Network(container, automata.get_data(), global.execution.options);
-            global.execution.network.on("stabilized", () => {
-                global.execution.network.fit();
-                // global.execution.network.storePositions();
-                global.execution.options.physics.enabled = false;
-                global.execution.network.setOptions(global.execution.options);
-            });
         }
 
 
@@ -87,7 +75,7 @@
                 var accepted = global.execution.branches[branch].accepted;
 
                 var remaining = global.execution.word.substring(curr_step, global.execution.word.length);
-                
+
                 let automata = get_current_automata();
 
                 if (curr_state == -1)
@@ -95,11 +83,11 @@
 
                 if (automata.initial_node == curr_state)
                     new_state.find('.state').addClass('initial');
-                    
-                if (automata.is_node_final(curr_state)) 
+
+                if (automata.is_node_final(curr_state))
                     new_state.find('.state').addClass('final');
 
-                if (accepted) 
+                if (accepted)
                     new_state.addClass('accepted');
                 else if(!processing)
                     new_state.addClass('rejected');
@@ -170,7 +158,7 @@
                 //sends each branch data followed by the automata and the word
                 let automata = get_current_automata();
                 var send = {
-                    configuration: global.execution.branches[branch], 
+                    configuration: global.execution.branches[branch],
                     word:global.execution.word,
                     automata: automata.to_json(),
                 };
@@ -238,7 +226,7 @@
             update_branches();
         }
 
-        /*  
+        /*
         records the branches reached by a given branch, identified by a branch_id
         if the branch has finished processing, record the event
 
@@ -272,9 +260,9 @@
                         var state_id = states[i];
 
                         var new_branch = {
-                            processing: true, 
-                            accepted: false, 
-                            curr_state: state_id, 
+                            processing: true,
+                            accepted: false,
+                            curr_state: state_id,
                             curr_step: curr_step+step_incrementation
                         };
 
@@ -291,7 +279,7 @@
                 //record branches with update in its curr_step
                 record_new_branches(data.next_states, 1);
 
-                
+
                 //record branches with no update in its curr_step
                 //(reached by epsilon transitions)
                 record_new_branches(data.next_episilon_states, 0);

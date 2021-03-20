@@ -1,7 +1,7 @@
 {% from 'automata/controls.html' import edition_controls %}
 {% from 'automata/modal.html' import node_modal, edge_modal %}
 
-{% macro edition(prefix_id='') %}    
+{% macro edition(prefix_id='') %}
     <div>
         {{ edition_controls(prefix_id=prefix_id) }}
         <div id="{{prefix_id}}-edition-container" class="bg-light border h-50vh"> </div>
@@ -46,13 +46,7 @@
                     addEdge: add_edge,
                     editEdge: false,
                 },
-                physics: {
-                    enabled: false,
-                    barnesHut: {
-                        avoidOverlap: 2,
-                    },
-                    stabilization: true,
-                },
+                physics: false,
             };
             global.edition.network = new vis.Network(container, automata.get_data(), global.edition.options);
             global.edition.network.on("doubleClick", event => {
@@ -66,14 +60,8 @@
             global.edition.network.on("select", event => {
                 if (event.nodes.length || event.edges.length)
                     $(REMOVE_BTN).removeClass("d-none");
-                else 
+                else
                     $(REMOVE_BTN).addClass("d-none");
-            });
-            global.edition.network.on("stabilized", () => {
-                global.edition.network.fit();
-                global.edition.network.storePositions();
-                global.edition.options.physics.enabled = false;
-                global.edition.network.setOptions(global.edition.options);
             });
         }
 
@@ -84,7 +72,6 @@
             node_data.label = `q${next_node_id}`;
             node_data.final = false;
             node_data.group = 'default';
-            // Object.assign(node_data, DEFAULT);
             callback(node_data);
             automata.update_style();
             toggle_edition_mode();
