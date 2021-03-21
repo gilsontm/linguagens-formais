@@ -226,6 +226,16 @@ class TreeNode():
 		if self.right:
 			self.right.recursive_call(function)
 
+	def debug_(self):
+		if self.left:
+			print('left:')
+			self.left.debug_()
+		print(self.symbol, self.get_first_pos(), self.get_last_pos(), self.get_follow_pos())
+		if self.right:
+			print('right:')
+			self.right.debug_()
+		print('out!')
+
 	# insere uma sequência de IDs ao conjunto 'follow_pos' de um nodo
 	def __append_follow_pos(self, positions):
 		for pos in positions:

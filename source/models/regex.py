@@ -97,9 +97,9 @@ class Regex:
 
     def __topologic_order_iteration(self, vertice, color, stack):
         color[vertice] = Regex.OPEN
-        for key in self.__dependencies(vertice):
+        for key in self.depended_by[vertice]:
             if color[key] == Regex.NOT_VISITED:
-                stack = self.__topologic_order_iteration(key, visited, stack)
+                stack = self.__topologic_order_iteration(key, color, stack)
             elif color[key] == Regex.OPEN:
                 return None
             pass

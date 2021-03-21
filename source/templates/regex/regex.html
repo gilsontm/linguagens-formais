@@ -51,16 +51,18 @@
             OPERATOR: e => `<span class="text-danger">${e}</span>`,
             VARIABLE: e => `<span class="text-warning">${e}</span>`,
             PARENTHESIS: e => `<span class="text-success">${e}</span>`,
+            BRACKETS: e => `<span class="text-success">${e}</span>`,
         };
 
         function apply_color(text) {
             let parsed = text;
-            parsed = parsed.replace(/(<-)/g, REGEX_CLASSES.ASSIGN);
+            parsed = parsed.replace(/(&lt;-)/g, REGEX_CLASSES.ASSIGN);
             parsed = parsed.replace(/^[a-z]*$/g, REGEX_CLASSES.TEXT);
-            parsed = parsed.replace(/[A-Z]/g, REGEX_CLASSES.VARIABLE);
+            parsed = parsed.replace(/[A-Z]*/g, REGEX_CLASSES.VARIABLE);
             parsed = parsed.replace(/(\(|\))/g, REGEX_CLASSES.PARENTHESIS);
+            parsed = parsed.replace(/(\[|\])/g, REGEX_CLASSES.BRACKETS);
             parsed = parsed.replace(/(\r\n|\r|\n)/g, REGEX_CLASSES.BREAK);
-            parsed = parsed.replace(/(\+|\*|\.|\;)/g, REGEX_CLASSES.OPERATOR);
+            parsed = parsed.replace(/(\+|\*|\.|\;|\?)/g, REGEX_CLASSES.OPERATOR);
             return parsed;
         }
 
@@ -69,8 +71,9 @@
             parsed = parsed.replace(/ /g, "");
             parsed = parsed.replace(/(<-)/g, "=");
             parsed = parsed.replace(/[A-Z]/g, "A");
-            parsed = parsed.replace(/[a-z]/g, "a");
+            parsed = parsed.replace(/[a-z, 0-9]/g, "a");
             parsed = parsed.replace(/a+/g, "a");
+            parsed = parsed.replace(/A+/g, "A");
             parsed = parsed.replace(/(\+|\.)/g, "+");
             let lines = parsed.split("\n");
             lines = lines.filter(e => e);
@@ -79,9 +82,10 @@
             for (i in lines) {
                 if (lines[i].length < 4)
                     return false;
-                if (!lines[i].startsWith("A=") || !lines[i].endsWith(";"))
+                if (lines[i].match(/AA*=/).length == 0 || !lines[i].endsWith(";"))
                     return false;
-                lines[i] = lines[i].substring(2, lines[i].length - 1);
+                indexOfEqual = lines[i].indexOf('=')
+                lines[i] = lines[i].substring(indexOfEqual + 1, lines[i].length - 1);
                 lines[i] = lines[i].replace(/[A-Z]/g, "a");
             }
             let length;
@@ -89,8 +93,18 @@
                 do {
                     length = line.length;
                     line = line.replace(/a\+a/g, "a");  //  a+a --> a
+                    line = line.replace(/a\-a/g, "a");  //  a-a --> a
+                    /*
+                        A ideia é permitir/obrigar espaçamento somente
+                        dentro de brackets, sem quebrar com as outras
+                        regras de sintaxe.
+                    */
+                    line = line.replace(/a\s*a/g, "b"); //  a a --> b
                     line = line.replace(/\(a\)/g, "a"); //  (a) --> a
+                    line = line.replace(/\[a\]/g, "a"); //  [a] --> a
+                    line = line.replace(/\[b\]/g, "a"); //  [b] --> a
                     line = line.replace(/a\*/g, "a");   //   a* --> a
+                    line = line.replace(/a\?/g, "a");   //   a? --> a
                 } while (length > line.length);
                 if (line != "a")
                     return false;

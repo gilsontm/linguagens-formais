@@ -99,11 +99,23 @@ class RegularExpressionInterface():
 		stack = []
 		symbols = []
 
-		for ch in txt:
+		length = len(txt)
+		i = 0
+		while i < length:
+			ch = txt[i]
+			i += 1
 			if ch == ' ':
 				continue
+			# Se c for um caracter maiúsculo:
+			if re.is_capital(ch):
+				var = ''
+				while re.is_capital(ch):
+					var += ch
+					ch = txt[i]
+					i += 1
+				symbols.append(var)
 			# Se c for um caracter:
-			if re.is_operand(ch):
+			elif re.is_operand(ch):
 				symbols.append(ch)
 			elif ch == '(':
 				stack.append('(')
@@ -193,7 +205,6 @@ class RegularExpressionInterface():
 		final = not(all(tree.get_node(p).get_symbol() != '#' for p in p_list))
 		if final:
 			dfa.add_final_state(state)
-		dfa.add_state(name=self.__state_string([]))
 		unmarked_states.add(state)
 		states_d.add(initial_state_name)
 		alphabet = tree.get_alphabet()
@@ -218,6 +229,8 @@ class RegularExpressionInterface():
 					states_d.add(u_name)
 					if final:
 						dfa.add_final_state(new_state)
+				elif len(u) == 0:
+					continue;
 				else:
 					new_state = dfa.get_state_by_name(u_name)
 				dfa.add_transition(symbol=a, from_state=state, to_state=new_state)
