@@ -25,20 +25,30 @@ class RegularExpressionInterface():
 
 	# Função adiciona operadores de concatenação, definidas por caracteres não espaçados na expressão
 	def __insert_concatenation_operator(self, txt):
-		shortConcatenation = False
-		new_txt = ''
 		opcnt = 0
-		for ch in txt:
-			if re.is_operand(ch) and shortConcatenation:
-				new_txt += ','
-			new_txt += ch
+		new_txt = ''
+
+		length = len(txt)
+		i = 0
+		while i < length:
+			ch = txt[i]
+			i += 1
 			if re.is_operand(ch):
-				shortConcatenation = True
-				opcnt += 1
+				chrs = []
+				while i < length and re.is_operand(txt[i]):
+					print(txt[i], re.is_operand(txt[i]), '*' + ch)
+					chrs.append(ch)
+					ch = txt[i]
+					i += 1
+				chrs.append(ch)
+				if len(chrs) == 1:
+					new_txt += chrs[0]
+				elif chrs:
+					new_txt += '(' + '.'.join(chrs) + ')'
 			else:
-				shortConcatenation = False
-			if ch == '?':
-				opcnt += 1
+				if ch == '?':
+					opcnt += 1
+				new_txt += ch
 		return new_txt, opcnt
 
 	# Função, resolver extensão de ER, chaves.
@@ -109,10 +119,11 @@ class RegularExpressionInterface():
 			# Se c for um caracter maiúsculo:
 			if re.is_capital(ch):
 				var = ''
-				while re.is_capital(ch):
+				while i < length and re.is_capital(txt[i]):
 					var += ch
 					ch = txt[i]
 					i += 1
+				var += ch
 				symbols.append(var)
 			# Se c for um caracter:
 			elif re.is_operand(ch):
