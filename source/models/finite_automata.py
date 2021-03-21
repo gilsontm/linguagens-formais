@@ -21,8 +21,6 @@ class FiniteAutomata:
         self.final_ids = []
         #automata as python dict directly from json
         self.json_automata = None
-        
-
 
     """
         Builds this finite automata from a json;
@@ -30,7 +28,7 @@ class FiniteAutomata:
         The json_automata dict has a 'states' index and a 'transitions' index;
         Each states index enrty has its 'id', 'name', and 'initial' and final flags;
         Each transition index enrty has its 'from', 'to', and 'symbol' list;
-        Each state, of State type, followed by it's transitions is stored in states dict, 
+        Each state, of State type, followed by it's transitions is stored in states dict,
             a python dict from id to State object;
     """
     def from_json(self, json_automata):
@@ -53,9 +51,9 @@ class FiniteAutomata:
                 self.states[from_id].add_transition(symbol, to_state)
 
     """
-        Checks if this automata has a initial state, 
+        Checks if this automata has a initial state,
         if state with id equal to initial_state_id is in states list
-        if has at least one final state, 
+        if has at least one final state,
         if every state id in final states id list is in states list
         and if every state referenced by its states transitions in in the states list
     """
@@ -81,7 +79,7 @@ class FiniteAutomata:
         transition_map = {}
         symbol_set = set()
 
-        with open(file_path, "w") as f: 
+        with open(file_path, "w") as f:
             f.write(str(len(self.states))+ '\n')
             f.write(str(self.initial_id)+ '\n')
             for final_id in self.final_ids:
@@ -142,7 +140,7 @@ class FiniteAutomata:
         Translates this automata to a python dict
         then stores it in 'json_automata';
 
-        Since the json structure splits states and transitions, 
+        Since the json structure splits states and transitions,
         diferently of this automata structure,
         it is created a transition_map to hold the transitions
         before appending then to the dict;
@@ -167,13 +165,12 @@ class FiniteAutomata:
 
         for from_id, to_state_n_values in transition_map.items():
             for to_state, values in to_state_n_values.items():
-                self.json_automata['transitions'].append({"from": from_id, "to": to_state.id, "values": values}) 
+                self.json_automata['transitions'].append({"from": from_id, "to": to_state.id, "values": values})
         return self.json_automata
 
-
     """
-        returns automaton state after transitioning from state with "state_id" 
-        by the character in "step" index of "word" 
+        returns automaton state after transitioning from state with "state_id"
+        by the character in "step" index of "word"
     """
     def step_forward(self, state_id, step, word):
         #set curr_state state
@@ -282,7 +279,7 @@ class FiniteAutomata:
 
                 state.add_transition(symbol,next_state)
 
-        """ transforms states names, that are the ids set in a string, 
+        """ transforms states names, that are the ids set in a string,
             to original names set in a string
             define final_ids
         """
@@ -300,7 +297,6 @@ class FiniteAutomata:
             state.name = name_compound
 
         return new_automata
-
 
     """
         records in new_states the states and its transitions of this automaton determinzed
@@ -327,8 +323,6 @@ class FiniteAutomata:
         for symbol, state_list in new_states[name].items():
             if not (FiniteAutomata.to_closure_string(state_list) in new_states):
                 FiniteAutomata.determinization_recursion(automaton, state_list, epsilon_closure, new_states)
-
-
 
     """
         returns the unification of two given automata
@@ -372,7 +366,7 @@ class FiniteAutomata:
             new_states[automata_2_state_count] = state
             if state_id in automaton_2.final_ids:
                 new_final_states.append(automata_2_state_count)
-        
+
         new_automaton.rename_states()
 
         return new_automaton
@@ -396,7 +390,6 @@ class FiniteAutomata:
         new_automaton.final_ids = new_final_ids
 
         return new_automaton
- 
 
     """
         returns the intersection of two given automata
@@ -407,71 +400,151 @@ class FiniteAutomata:
         complement_2 = FiniteAutomata.complement(automaton_2)
 
         unification_of_complements = FiniteAutomata.unify(complement_1, complement_2)
-        
+
         intesection = FiniteAutomata.complement(unification_of_complements)
         intesection.rename_states()
 
         return intesection
 
     """
-        returns minimized deterministic finite automaton
+        minimizes the automaton and returns:
+            - (True, minimized_automaton) if the minimization is successul
+            - (False, None) if the minimization fails (i.e. the automaton is invalid)
     """
     def minimize(automaton_in):
+        automaton = copy.deepcopy(automaton_in)
+        if (not automaton.is_deterministic()):
+            automaton = FiniteAutomata.determinize(automaton)
 
-        P = list(automaton_in.states.keys())
-        Q = automaton_in.final_ids
+        automaton.remove_unreachable_states()
+        if not automaton.valid():
+            return False, None
 
-        SIGMA = automaton_in.alphabet()
+        automaton.remove_dead_states()
+        if not automaton.valid():
+            return False, None
 
-        #while (Q é não-vazio) do
-        while (Q):
-            print(len(Q))
+        minimized_automaton = FiniteAutomata()
+        equivalence_classes = automaton.get_equivalence_classes()
+        equivalence_classes = tuple(equivalence_classes)
 
-            #escolha e remova um conjunto A de Q
-            A = []
-            A.append(Q.pop())
-            if(Q):
-                A.append(Q.pop())
+        mapping = {}
 
-            #for each c in ∑ do
-            for c in SIGMA:
+        for class_id, class_set in enumerate(equivalence_classes):
+            mapping.update({state_id : class_id for state_id in class_set})
+            name = ", ".join(map(lambda x: f"q{x}", class_set))
+            name = "{" + name + "}"
+            state = minimized_automaton.add_state(name)
+            if automaton.initial_id in class_set:
+                minimized_automaton.set_initial_state(state)
+            if len(class_set.intersection(set(automaton.final_ids))) > 0:
+                minimized_automaton.add_final_state(state)
 
-                #let X é o conjunto de estados para o qual uma transição sobre c leva a um estado em A
-                X = []
-                for state_id in list(automaton_in.states.keys()):
-                    if (c in automaton_in.states[state_id].transition):
-                        for state in automaton_in.states[state_id].transition[c]:
-                            if state.id in A and not(state.id in X):
-                                X.append(state.id)
+        for from_class_id, from_class_set in enumerate(equivalence_classes):
+            from_state_id = tuple(from_class_set)[0]
+            from_state = automaton.states[from_state_id]
+            from_class = minimized_automaton.states[from_class_id]
+            for symbol in from_state.transition:
+                to_state = from_state.transition[symbol][0]
+                to_class_id = mapping[to_state.id]
+                to_class = minimized_automaton.states[to_class_id]
+                minimized_automaton.add_transition(symbol, from_class, to_class)
 
-                #for each conjunto Y in P para o qual X ∩ Y é não-vazio do
-                every_Y_in_P = FiniteAutomata.powerset(P)
+        minimized_automaton.rename_states()
+        return True, minimized_automaton
 
-                for Y in every_Y_in_P:
-                    Y_intersection_X = list(set(Y) & set(X))
-                    Y_minus_X = [item for item in Y if item not in X]
-                    if Y_intersection_X:
-                        #substitua Y em P pelos dois conjuntos X ∩ Y e Y \ X
-                        P = [item for item in P if item not in Y]
-                        P = list(set(P) | set(Y_minus_X) | set(Y_intersection_X))
+    """
+        removes unreachable states from the automaton
+        DANGER: this can invalidate the automaton (example: all final states could be removed)
+    """
+    def remove_unreachable_states(self):
+        reachable_states = set([self.initial_id])
+        remaining_states = set([self.initial_id])
 
-                        #if Y está contido em Q
-                        if(set(Y).issubset(set(Q))):
-                            #substitua Y em Q pelos mesmos dois conjuntos
-                            Q = [item for item in Q if item not in Y]
-                            Q = list(set(Q) | set(Y_minus_X) | set(Y_intersection_X))
-                        #else
+        while len(remaining_states) > 0:
+            temp = set()
+            for state_id in remaining_states:
+                from_state = self.states[state_id]
+                for to_states in from_state.transition.values():
+                    for to_state in to_states:
+                        temp.add(to_state.id)
+            remaining_states = temp - reachable_states
+            reachable_states = reachable_states.union(remaining_states)
+
+        unreachable_state = set(self.states.keys()) - reachable_states
+        for unreachable_state_id in unreachable_state:
+            self.states.pop(unreachable_state_id, None)
+        self.final_ids = [item for item in self.final_ids if item in reachable_states]
+
+    """
+        removes dead states from the automaton
+        DANGER: this can invalidate the automaton (example: initial and/or final states could be removed)
+    """
+    def remove_dead_states(self):
+        alive_states = set(self.final_ids)
+        remaining_states = set(self.final_ids)
+
+        while len(remaining_states) > 0:
+            temp = set()
+            for from_state in self.states.values():
+                for to_state_id in remaining_states:
+                    if from_state.has_transition_to_state(to_state_id):
+                        temp.add(from_state.id)
+                        break
+            remaining_states = temp - alive_states
+            alive_states = alive_states.union(remaining_states)
+
+        dead_states = set(self.states.keys()) - alive_states
+        for dead_state_id in dead_states:
+            self.states.pop(dead_state_id, None)
+
+        for state in self.states.values():
+            for dead_state_id in dead_states:
+                state.remove_transitions_to(dead_state_id)
+        self.final_ids = [item for item in self.final_ids if item in alive_states]
+
+        if self.initial_id in dead_states:
+            initial_id = None
+
+    """
+        removes equivalent states from the automaton
+        adapted from Hopcroft's algorithm: https://en.wikipedia.org/wiki/DFA_minimization
+    """
+    def get_equivalence_classes(self):
+        alphabet = self.alphabet()
+        final_states = frozenset(self.final_ids)
+        non_final_states = frozenset(self.states.keys()) - final_states
+        P = set([final_states, non_final_states])
+        W = set([final_states, non_final_states])
+        while len(W) > 0:
+            A = W.pop()
+            for symbol in alphabet:
+                X = set()
+                for from_state in self.states.values():
+                    for to_state_id in A:
+                        if from_state.has_transition_to_state_by_symbol(to_state_id, symbol):
+                            X.add(from_state.id)
+                            break
+                PP = set()
+                for Y in P:
+                    intersection = Y.intersection(X)
+                    difference = Y - X
+                    if len(intersection) == 0 or len(difference) == 0:
+                        PP.add(Y)
+                        continue
+                    PP.add(intersection)
+                    PP.add(difference)
+                    if Y in W:
+                        W.remove(Y)
+                        W.add(intersection)
+                        W.add(difference)
+                    else:
+                        if len(intersection) <= len(difference):
+                            W.add(intersection)
                         else:
-                            #adicione o menor dos dois conjuntos à Q
-                            if (len(Y_intersection_X) <= len(Y_minus_X)):
-                                Q = list(set(Q) | set(Y_intersection_X))
-                            else:
-                                Q = list(set(Q) | set(Y_minus_X))
-
-        print(*list(automaton_in.states.keys()), sep = ", ") 
-        print(*P, sep = ", ")
-
-
+                            W.add(difference)
+                P = PP
+        return P
 
     def powerset(s):
         power_set = []
@@ -480,14 +553,12 @@ class FiniteAutomata:
             power_set.append([s[j] for j in range(x) if (i & (1 << j))])
         return power_set
 
-
     """
         rename states to q+state_id
     """
     def rename_states(self):
         for state_id, state in self.states.items():
             state.name = "q"+str(state_id)
-
 
     #returns state name given a list of states
     def to_closure_string(closure):
@@ -530,7 +601,7 @@ class FiniteAutomata:
     #automatic id assignment
     #returns the added state
     def add_state(self, name):
-        state_id = max(list(self.states.keys()) + [0])+1
+        state_id = max(list(self.states.keys()) + [-1]) + 1
         self.states[state_id] = State(state_id, name)
         return self.states[state_id]
 

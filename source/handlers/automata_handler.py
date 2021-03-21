@@ -59,6 +59,16 @@ class AutomataHandler:
         json = determinized_automata.to_json()
         return json
 
+    @blueprint.route("/minimize", methods=["POST"])
+    def minimize_automata():
+        automata = FiniteAutomata()
+        automata.from_json(request.get_json()['automata'])
+        valid, minimized_automata = FiniteAutomata.minimize(automata)
+        if valid:
+            json = minimized_automata.to_json()
+            return json
+        return None
+
     @blueprint.route("/step", methods=["POST"])
     def step_automata():
         json = request.get_json()

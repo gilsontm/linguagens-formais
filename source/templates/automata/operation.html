@@ -40,13 +40,13 @@
         }
 
         function operate(operation, data, extra) {
-            console.log(data);
             $.ajax({
                 type: "POST",
                 url: `/automata/${operation}`,
                 data: JSON.stringify(data),
                 contentType: "application/json",
-                success: res => {console.log(res); import_automata(res, extra);},
+                success: res => import_automata(res, extra),
+                error: res => show_error(res),
             });
         }
 
