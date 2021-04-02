@@ -58,7 +58,20 @@ class FiniteAutomata:
         and if every state referenced by its states transitions in in the states list
     """
     def valid(self):
-        if not(self.states) or self.initial_id == None or not(self.initial_id in self.states) or not(self.final_ids) or not(all(elem in list(self.states.keys()) for elem in self.final_ids)):
+        if not(self.states):
+            #Lista de estados está vazia
+            return False
+        elif self.initial_id == None:
+            #Não possui estado inicial
+            return False
+        elif not(self.initial_id in self.states):
+            #Estado inicial não está decladado na lista de estados
+            return False
+        elif self.final_ids == None:
+            #Lista de estados finais pode ser vazia, porém, não nula
+            return False
+        elif not(all(elem in list(self.states.keys()) for elem in self.final_ids)):
+            #Alguma estado final não está declarado na lista de estados
             return False
 
         for state_id, state in self.states.items():
@@ -74,6 +87,7 @@ class FiniteAutomata:
     """
     def to_file(self, file_path):
         if (not self.valid()):
+            print('*****NOT VALID*****')
             return False
 
         transition_map = {}

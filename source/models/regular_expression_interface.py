@@ -25,20 +25,30 @@ class RegularExpressionInterface():
 
 	# Função adiciona operadores de concatenação, definidas por caracteres não espaçados na expressão
 	def __insert_concatenation_operator(self, txt):
-		shortConcatenation = False
-		new_txt = ''
 		opcnt = 0
-		for ch in txt:
-			if re.is_operand(ch) and shortConcatenation:
-				new_txt += ','
-			new_txt += ch
+		new_txt = ''
+
+		length = len(txt)
+		i = 0
+		while i < length:
+			ch = txt[i]
+			i += 1
 			if re.is_operand(ch):
-				shortConcatenation = True
-				opcnt += 1
+				chrs = []
+				while i < length and re.is_operand(txt[i]):
+					print(txt[i], re.is_operand(txt[i]), '*' + ch)
+					chrs.append(ch)
+					ch = txt[i]
+					i += 1
+				chrs.append(ch)
+				if len(chrs) == 1:
+					new_txt += chrs[0]
+				elif chrs:
+					new_txt += '(' + '.'.join(chrs) + ')'
 			else:
-				shortConcatenation = False
-			if ch == '?':
-				opcnt += 1
+				if ch == '?':
+					opcnt += 1
+				new_txt += ch
 		return new_txt, opcnt
 
 	# Função, resolver extensão de ER, chaves.
@@ -99,11 +109,24 @@ class RegularExpressionInterface():
 		stack = []
 		symbols = []
 
-		for ch in txt:
+		length = len(txt)
+		i = 0
+		while i < length:
+			ch = txt[i]
+			i += 1
 			if ch == ' ':
 				continue
+			# Se c for um caracter maiúsculo:
+			if re.is_capital(ch):
+				var = ''
+				while i < length and re.is_capital(txt[i]):
+					var += ch
+					ch = txt[i]
+					i += 1
+				var += ch
+				symbols.append(var)
 			# Se c for um caracter:
-			if re.is_operand(ch):
+			elif re.is_operand(ch):
 				symbols.append(ch)
 			elif ch == '(':
 				stack.append('(')
@@ -190,11 +213,9 @@ class RegularExpressionInterface():
 		state = dfa.add_state(name=initial_state_name)
 		dfa.set_initial_state(state)
 		p_list = self.__positions_integer(initial_state_name)
-		for p in p_list:
-			node = tree.get_node(p)
-			if node.get_symbol() == '#':
-				dfa.add_final_state(state)
-		dfa.add_state(name=self.__state_string([]))
+		final = not(all(tree.get_node(p).get_symbol() != '#' for p in p_list))
+		if final:
+			dfa.add_final_state(state)
 		unmarked_states.add(state)
 		states_d.add(initial_state_name)
 		alphabet = tree.get_alphabet()
@@ -205,6 +226,7 @@ class RegularExpressionInterface():
 			p_list = self.__positions_integer(name)
 			for a in alphabet:
 				u = set()
+				final = False
 				for p in p_list:
 					node = tree.get_node(p)
 					if node.get_symbol() == a:
@@ -212,11 +234,14 @@ class RegularExpressionInterface():
 						u = u.union(follow_pos)
 				u_name = self.__state_string(u)
 				if len(u) != 0 and u_name not in states_d:
+					final = not(all(tree.get_node(i).get_symbol() != '#' for i in u))
 					new_state = dfa.add_state(u_name)
 					unmarked_states.add(new_state)
 					states_d.add(u_name)
-					if a == '#':
+					if final:
 						dfa.add_final_state(new_state)
+				elif len(u) == 0:
+					continue;
 				else:
 					new_state = dfa.get_state_by_name(u_name)
 				dfa.add_transition(symbol=a, from_state=state, to_state=new_state)
