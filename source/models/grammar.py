@@ -69,3 +69,7 @@ class Grammar:
 
     def add_key(self, key, values):
         self.dictionary[key] = values
+
+    def add_derivation(self, key, value):
+        self.dictionary[key].append(value)
+
