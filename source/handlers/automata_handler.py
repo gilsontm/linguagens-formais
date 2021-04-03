@@ -2,6 +2,8 @@ import requests
 from flask import *
 from utils.path import get_file_path
 from models.finite_automata import FiniteAutomata
+from models.grammar_converter import GrammarConverter
+from exceptions.invalid_usage import InvalidUsage
 
 
 blueprint = Blueprint("automata", __name__)
@@ -49,6 +51,18 @@ class AutomataHandler:
         automata = FiniteAutomata()
         automata.from_json(request.get_json())
         automata.to_file(path)
+        return send_file(path, mimetype="text/plain")
+
+    @blueprint.route("/export-as-grammar", methods=["POST"])
+    def export_automata_grammar():
+        path = get_file_path("grammar.txt")
+        automata = FiniteAutomata()
+        converter = GrammarConverter()
+        automata.from_json(request.get_json())
+        if not automata.is_deterministic():
+            raise InvalidUsage('Automato nao deterministico')
+        grammar = converter.automata_to_grammar(automata)
+        grammar.to_file(path)
         return send_file(path, mimetype="text/plain")
 
     @blueprint.route("/determinize", methods=["POST"])

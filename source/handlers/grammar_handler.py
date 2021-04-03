@@ -28,8 +28,8 @@ class GrammarHandler:
         return send_file(path, mimetype="text/plain")
 
     @blueprint.route("/export-afd", methods=["POST"])
-    def export_grammar():
-        path = get_file_path("grammar.txt")
+    def export_grammar_afd():
+        path = get_file_path("automata.txt")
         grammar = Grammar()
         converter = GrammarConverter()
         grammar.from_json(request.get_json())

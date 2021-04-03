@@ -1,5 +1,5 @@
-from finite_automata import FiniteAutomata
-from grammar import Grammar
+from models.finite_automata import FiniteAutomata
+from models.grammar import Grammar
 
 
 class GrammarConverter:
