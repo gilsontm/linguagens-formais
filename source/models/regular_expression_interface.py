@@ -49,7 +49,7 @@ class RegularExpressionInterface():
 				if len(chrs) == 1:
 					new_txt += chrs[0]
 				elif chrs:
-					new_txt += '(' + '.'.join(chrs) + ')'
+					new_txt += '.'.join(chrs)
 			else:
 				if ch == '?':
 					opcnt += 1
