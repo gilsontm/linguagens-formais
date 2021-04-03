@@ -33,13 +33,18 @@ class RegularExpressionInterface():
 		while i < length:
 			ch = txt[i]
 			i += 1
-			if re.is_operand(ch):
+			if re.is_operand(ch) or ch == '\\':
+				if ch == '\\':
+					ch += txt[i]
+					i += 1
 				chrs = []
-				while i < length and re.is_operand(txt[i]):
-					print(txt[i], re.is_operand(txt[i]), '*' + ch)
+				while i < length and (re.is_operand(txt[i]) or txt[i] == '\\'):
 					chrs.append(ch)
 					ch = txt[i]
 					i += 1
+					if ch == '\\':
+						ch += txt[i]
+						i += 1
 				chrs.append(ch)
 				if len(chrs) == 1:
 					new_txt += chrs[0]
@@ -61,7 +66,7 @@ class RegularExpressionInterface():
 			ch = exp[i]
 			i += 1
 
-			if re.is_operand(ch) or ch == '?':
+			if re.is_operand(ch) or ch == '?' or ch == '\\':
 				op_cnt += 1
 
 			if ch == '[':
@@ -69,6 +74,9 @@ class RegularExpressionInterface():
 				while i < length:
 					ch = exp[i]
 					i += 1
+					if ch == '\\':
+						ch = exp[i]
+						i += 1
 					if ch == ']':
 						break
 					if ch == ' ':
@@ -77,6 +85,8 @@ class RegularExpressionInterface():
 					if i+2 < length and peek == '-':
 						i += 1
 						a = ord(ch)
+						if exp[i] == '\\':
+							i += 1
 						b = ord(exp[i])
 						if b >= a:
 							for k in range(a, b+1):
@@ -117,16 +127,21 @@ class RegularExpressionInterface():
 			if ch == ' ':
 				continue
 			# Se c for um caracter maiúsculo:
-			if re.is_capital(ch):
+			if ch == '<':
 				var = ''
-				while i < length and re.is_capital(txt[i]):
+				while i < length and txt[i] != '>':
 					var += ch
 					ch = txt[i]
 					i += 1
 				var += ch
 				symbols.append(var)
-			# Se c for um caracter:
+			# Se c for um operando:
 			elif re.is_operand(ch):
+				symbols.append(ch)
+			# Se c for um operando especial
+			elif ch == '\\':
+				ch += txt[i];
+				i += 1
 				symbols.append(ch)
 			elif ch == '(':
 				stack.append('(')
@@ -162,18 +177,21 @@ class RegularExpressionInterface():
 		for ch in posfix:
 			if ch == ',':
 				ch = '.'
-			if re.is_operand(ch):
-				stack.append(TreeNode(symbol=ch, tree=tree, id_=opcnt))
+			if ch.startswith('\\'):
+				stack.append(TreeNode(symbol=ch[1], tree=tree, type_= Tree.OPERAND,id_=opcnt))
+				opcnt -= 1
+			elif re.is_operand(ch):
+				stack.append(TreeNode(symbol=ch, tree=tree, type_= Tree.OPERAND, id_=opcnt))
 				opcnt -= 1
 			elif ch == '*':
 				node = stack.pop()
-				opnode = TreeNode(symbol=ch, tree=tree)
+				opnode = TreeNode(symbol=ch, tree=tree, type_= Tree.OPERATOR)
 				opnode.insert_left(node)
 				stack.append(opnode)
 			else:
 				node1 = stack.pop()
 				node2 = stack.pop()
-				opnode = TreeNode(symbol=ch, tree=tree)
+				opnode = TreeNode(symbol=ch, tree=tree, type_= Tree.OPERATOR)
 				opnode.insert_left(node2)
 				opnode.insert_right(node1)
 				stack.append(opnode)

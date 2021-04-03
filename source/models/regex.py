@@ -63,12 +63,13 @@ class Regex:
             while i < length:
                 ch = exp[i]
                 i += 1
-                dependency = ""
-                while i < length and ch.isupper():
-                    dependency += ch
-                    ch = exp[i]
-                    i += 1
-                if len(dependency) != 0:
+                if ch == '<':
+                    dependency = ""
+                    while i < length and ch != '>':
+                        dependency += ch
+                        ch = exp[i]
+                        i += 1
+                    dependency += ch;
                     self.__add_dependency(var, dependency)
 
     def __resolve_dependencies(self, var):
