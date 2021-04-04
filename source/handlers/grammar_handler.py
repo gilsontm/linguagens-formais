@@ -29,7 +29,7 @@ class GrammarHandler:
         grammar.to_file(path)
         return send_file(path, mimetype="text/plain")
 
-    @blueprint.route("/export-afd", methods=["POST"])
+    @blueprint.route("/to-automata", methods=["POST"])
     def export_grammar_afd():
         path = get_file_path("automata.txt")
         grammar = Grammar()

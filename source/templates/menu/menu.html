@@ -17,13 +17,6 @@
                     </svg>
                     Exportar
                 </button>
-                <button id="export-5" class="text-left btn btn-block my-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-file-earmark-arrow-down" viewBox="0 0 20 20">
-                        <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
-                        <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
-                    </svg>
-                    Exportar como GR
-                </button>
             </div>
             <button data-toggle="tab" role="tab" href="#content-2" class="text-left btn nav-item my-1 nav-link"> Gramáticas </button>
             <div class="collapse ml-4" data-parent="#accordion">
@@ -40,13 +33,6 @@
                         <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
                     </svg>
                     Exportar
-                </button>
-                <button id="export-4" class="text-left btn btn-block my-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-file-earmark-arrow-down" viewBox="0 0 20 20">
-                        <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
-                        <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
-                    </svg>
-                    Exportar como AFD
                 </button>
             </div>
             <button data-toggle="tab" role="tab" href="#content-3" class="text-left btn nav-item my-1 nav-link"> Expressões regulares </button>
@@ -109,11 +95,6 @@
             post_export("/automata/export", JSON.stringify(data), "automata.txt");
         });
 
-        $("#export-5").click(() => {
-            let data = {"automata" : export_automata()};
-            post_export("/automata/export-as-grammar", JSON.stringify(data), "automata-to-grammar.txt");
-        });
-
         $("#import-2").click(() => {
             show_import_modal(data => post_import('/grammar/import', data, res => import_grammar(res)));
         });
@@ -121,11 +102,6 @@
         $("#export-2").click(() => {
             let data = export_grammar();
             post_export("/grammar/export", JSON.stringify(data), "grammar.txt");
-        });
-
-        $("#export-4").click(() => {
-            let data = export_grammar();
-            post_export("/grammar/export-afd", JSON.stringify(data), "grammar-to-automata.txt");
         });
 
         $("#import-3").click(() => {

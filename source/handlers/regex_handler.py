@@ -27,7 +27,7 @@ class RegexHandler:
         regex.to_file(path)
         return send_file(path, mimetype="text/plain")
 
-    @blueprint.route("/to_automata", methods=["POST"])
+    @blueprint.route("/to-automata", methods=["POST"])
     def convert_regex_to_dfa():
         regex = Regex.from_json(request.get_json())
         absolute_exp = regex.unify_expressions()

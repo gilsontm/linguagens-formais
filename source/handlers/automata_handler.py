@@ -61,7 +61,7 @@ class AutomataHandler:
         automata = FiniteAutomata.intersect(g.automata1, g.automata2)
         return automata.to_json()
 
-    @blueprint.route("/export-as-grammar", methods=["POST"])
+    @blueprint.route("/to-grammar", methods=["POST"])
     def export_automata_grammar():
         path = get_file_path("grammar.txt")
         converter = GrammarConverter()
@@ -89,7 +89,7 @@ class AutomataHandler:
         result = automata.step_forward(curr_state, curr_step, g.word)
         return result
 
-    @blueprint.route("/fastrun", methods=["POST"])
+    @blueprint.route("/fast-run", methods=["POST"])
     def fast_run_automata():
         automata = g.automata
         result = automata.fast_run(g.word)
