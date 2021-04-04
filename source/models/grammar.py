@@ -15,7 +15,7 @@ class Grammar:
                 self.dictionary[key] = value
 
     def to_file(self, file_path):
-        with open(file_path, "w") as f: 
+        with open(file_path, "w") as f:
             for key in self.dictionary:
                 write_string = key + " -> "
                 first = True
@@ -73,3 +73,36 @@ class Grammar:
     def add_derivation(self, key, value):
         self.dictionary[key].append(value)
 
+    """
+    Returns if a grammar is valid. An invalid grammar is one that
+    has a variable but no derivations.
+    """
+    def is_valid(self):
+        for k, v in self.dictionary.items():
+            if not v:
+                return False
+
+        return True
+
+    """
+    Returns if a grammar is regular
+    """
+    def is_regular(self):
+        for k, v in self.dictionary.items():
+            for derivation in v:
+                if len(k) != 1:
+                    return False
+
+                if not k.isupper():
+                    return False
+
+                if len(derivation) > 2:
+                    return False
+
+                if derivation[0].isupper():
+                    return False
+
+                if len(derivation) == 2 and derivation[1].islower():
+                    return False
+
+        return True

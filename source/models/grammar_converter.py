@@ -63,7 +63,11 @@ class GrammarConverter:
         # Get states id's
         states_id = states.keys()
 
-        final_states_id = automata.final_ids
+        final_states_id = ()
+
+        if automata.final_ids is not None:
+            final_states_id = automata.final_ids
+
         initial_state_id = automata.initial_id
 
         # Force the initial state to be S
