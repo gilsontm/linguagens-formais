@@ -3,6 +3,9 @@ from abc import ABCMeta, abstractmethod
 import models.re_utils as re
 
 class Tree:
+
+	OPERAND = 1
+	OPERATOR = 2
 	"""
 		Estrutura que armazena informações sobre a árvore completa.
 		A função principal é encontrar nodos específicos a partir de
@@ -17,7 +20,7 @@ class Tree:
 		alph = set()
 		def add_symbol_to_alph(set_, node):
 			symbol = node.get_symbol()
-			if re.is_operand(symbol) and symbol != '&' and symbol != '#':
+			if node.type() == Tree.OPERAND and symbol != '&' and symbol != '#':
 				set_.add(symbol)
 		root = self.get_root()
 		root.recursive_call(lambda x: add_symbol_to_alph(alph, x))
@@ -45,9 +48,10 @@ class TreeNode():
 		Atualmente lida principalmente com syntaxes em que nodos possuem 
 		no máximo dois filhos
 	"""
-	def __init__(self, symbol, tree, id_ = -1):
+	def __init__(self, symbol, tree, type_, id_ = -1):
 		self.symbol = symbol
 		self.id_ = id_
+		self.type_ = type_
 		self.left = None
 		self.right = None
 		self.father = None
@@ -58,6 +62,9 @@ class TreeNode():
 		self.last_pos = None
 		self.first_pos = None
 		self.follow_pos = set()
+
+	def type(self):
+		return self.type_
 
 	def get_symbol(self):
 		return self.symbol
@@ -85,20 +92,20 @@ class TreeNode():
 		"""
 			"If n is epsilon-node, then last_pos(n) is empty set"
 		"""
-		if self.symbol == '&':
+		if self.type() == Tree.OPERAND and self.symbol == '&':
 			return set()
 
 		"""
 			"If n is a leaf labeled with position i, then first_pos(n) is {i}"
 		"""
-		if re.is_operand(self.symbol):
+		if self.type() == Tree.OPERAND and self.symbol != '&':
 			return {self.id_}
 
 		"""
 			"If n is an union node with left child c1 and right child c2, 
 			then first_pos(n) is first_pos(c1) U first_pos(c2)"
 		"""
-		if self.symbol == '+':
+		if self.type() == Tree.OPERATOR and self.symbol == '+':
 			return self.left.get_first_pos().union(self.right.get_first_pos())
 
 		"""
@@ -110,7 +117,7 @@ class TreeNode():
 				first_pos(n) is first_pos(c1)
 			"
 		"""
-		if self.symbol == '.':
+		if self.type() == Tree.OPERATOR and self.symbol == '.':
 			if self.left.get_nullable():
 				return self.left.get_first_pos().union(self.right.get_first_pos())
 			else:
@@ -119,7 +126,7 @@ class TreeNode():
 		"""
 			"If n is a star-node with child c1, then first_pos(n) is first_pos(c1)"
 		"""
-		if self.symbol == '*':
+		if self.type() == Tree.OPERATOR and self.symbol == '*':
 			return self.left.get_first_pos()
 
 	# Função para calcular a 'last_pos' segundo o algoritmo de Aho
@@ -127,20 +134,20 @@ class TreeNode():
 		"""
 			"If n is epsilon-node, then last_pos(n) is empty set"
 		"""
-		if self.symbol == '&':
+		if self.type() == Tree.OPERAND and self.symbol == '&':
 			return set()
 
 		"""
 			"If n is a leaf-node labeled with position i, then last_pos(n) is {i}"
 		"""
-		if re.is_operand(self.symbol):
+		if self.type() == Tree.OPERAND and self.symbol != '&':
 			return {self.id_}
 
 		"""
 			"If n is an union node with left child c1 and right child c2, 
 			then last_pos(n) is last_pos(c1) U last_pos(c2)"
 		"""
-		if self.symbol == '+':
+		if self.type() == Tree.OPERATOR and self.symbol == '+':
 			return self.right.get_last_pos().union(self.left.get_last_pos())
 
 		"""
@@ -152,7 +159,7 @@ class TreeNode():
 				last_pos(n) is last_pos(c2)
 			"
 		"""
-		if self.symbol == '.':
+		if self.type() == Tree.OPERATOR and self.symbol == '.':
 			if self.right.get_nullable():
 				return self.left.get_last_pos().union(self.right.get_last_pos())
 			else:
@@ -161,7 +168,7 @@ class TreeNode():
 		"""
 			"If n is a star-node with child c1, then last_pos(n) is last_pos(c1)"
 		"""
-		if self.symbol == '*':
+		if self.type() == Tree.OPERATOR and self.symbol == '*':
 			return self.left.get_last_pos()
 
 	# Função para calcular o 'nullable' segundo o algoritmo de Aho
@@ -169,33 +176,33 @@ class TreeNode():
 		"""
 			"If n is a leaf-node labeled epsilon, then nullable(n) is True"
 		"""
-		if self.symbol == '&':
+		if self.type() == Tree.OPERAND and self.symbol == '&':
 			return True
 
 		"""
 			"If n is a leaf-node labeled with position i, then nullable(n) is False"
 		"""
-		if re.is_operand(self.symbol):
+		if self.type() == Tree.OPERAND and self.symbol != '&':
 			return False
 
 		"""
 			"If n is an union node with left child c1 and right child c2, 
 			then nullable(n) is nullable(c1) or nullable(c2)"
 		"""
-		if self.symbol == '+':
+		if self.type() == Tree.OPERATOR and self.symbol == '+':
 			return self.left.__calculate_nullable() or self.right.__calculate_nullable()
 		
 		"""
 			"If n is a cat-node with left child c1 and right child c2,
 			then nullable(n) is nullable(c1) and nullable(c2)"
 		"""
-		if self.symbol == '.':
+		if self.type() == Tree.OPERATOR and self.symbol == '.':
 			return self.left.__calculate_nullable() and self.right.__calculate_nullable()
 		
 		"""
 			"If n is a star-node, then nullable(n) is True"
 		"""
-		if self.symbol == '*':
+		if self.type() == Tree.OPERATOR and self.symbol == '*':
 			return True
 
 		return False
@@ -230,7 +237,7 @@ class TreeNode():
 		if self.left:
 			print('left:')
 			self.left.debug_()
-		print(self.symbol, self.get_first_pos(), self.get_last_pos(), self.get_follow_pos())
+		print(self.symbol, self.id_, self.get_first_pos(), self.get_last_pos(), self.get_follow_pos())
 		if self.right:
 			print('right:')
 			self.right.debug_()
@@ -251,7 +258,7 @@ class TreeNode():
 			"if n is a star-node, and i is a position in lastpos(n),
 			 then all positions in firstpos(n) are in followpos(i)"
 		"""
-		if self.symbol == '*':
+		if self.type() == Tree.OPERATOR and self.symbol == '*':
 			first_pos =  self.get_first_pos()
 			last_pos = self.get_last_pos()
 			for i in last_pos:
@@ -262,7 +269,7 @@ class TreeNode():
 			 and i is a position in lastpos(c1), then all positions in firstpos(c2)
 			 are in followpos(i)"		
 		"""
-		if self.symbol == '.':
+		if self.type() == Tree.OPERATOR and self.symbol == '.':
 			last_pos_c1 = self.left.get_last_pos()
 			first_pos_c2 = self.right.get_first_pos()
 			for i in last_pos_c1:
