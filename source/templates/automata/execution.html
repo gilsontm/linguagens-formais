@@ -124,14 +124,15 @@
 
             $.ajax({
                 type: 'POST',
-                url: '/automata/fastrun',
+                url: '/automata/fast-run',
                 data: JSON.stringify(send),
                 dataType: 'json',
                 processData: false,
                 contentType: 'application/json; charset=utf-8',
                 success: function(data) {
                     alert(data.accepted)
-                }
+                },
+                error: res => show_error(res),
             })
         }
 

@@ -1,8 +1,10 @@
 {% macro menu(prefix_id='') %}
     <div class="vertical-menu border-right bg-light p-3">
         <nav class="nav nav-pills flex-column text-left" role="tablist" id="accordion">
-            <button data-toggle="tab" role="tab" href="#content-1" class="text-left btn nav-item my-1 nav-link active"> Autômatos </button>
-            <div class="collapse ml-4 show" data-parent="#accordion">
+            <button data-toggle="tab" role="tab" href="#content-0" class="text-left btn nav-item my-1 nav-link active"> Documentação </button>
+            <div class="collapse ml-4 show" data-parent="#accordion"> </div>
+            <button data-toggle="tab" role="tab" href="#content-1" class="text-left btn nav-item my-1 nav-link"> Autômatos </button>
+            <div class="collapse ml-4" data-parent="#accordion">
                 <button id="import-1" class="text-left btn btn-block my-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-file-earmark-arrow-up" viewBox="0 0 20 20">
                         <path d="M8.5 11.5a.5.5 0 0 1-1 0V7.707L6.354 8.854a.5.5 0 1 1-.708-.708l2-2a.5.5 0 0 1 .708 0l2 2a.5.5 0 0 1-.708.708L8.5 7.707V11.5z"/>
@@ -35,7 +37,7 @@
                     Exportar
                 </button>
             </div>
-            <button data-toggle="tab" role="tab" href="#content-3" class="text-left btn nav-item my-1 nav-link"> Expressões regulares </button>
+            <button data-toggle="tab" role="tab" href="#content-3" class="text-left btn nav-item my-1 nav-link"> Expressões </button>
             <div class="collapse ml-4" data-parent="#accordion">
                 <button id="import-3" class="text-left btn btn-block my-1">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-file-earmark-arrow-up" viewBox="0 0 20 20">
@@ -91,7 +93,7 @@
         });
 
         $("#export-1").click(() => {
-            let data = export_automata();
+            let data = {"automata" : export_automata()};
             post_export("/automata/export", JSON.stringify(data), "automata.txt");
         });
 
@@ -147,7 +149,13 @@
             link.click();
         }
 
-        function show_error(res, message) {
+        function show_error(res, in_message) {
+            console.log(res);
+            let message = in_message;
+            if (res && res.hasOwnProperty("responseJSON")) {
+                if (res.responseJSON.hasOwnProperty("message"))
+                    message = res.responseJSON.message;
+            }
             $(ERROR_TOAST_TITLE).html(`Erro ${res ? res.status : ""}`);
             $(ERROR_TOAST_BODY).html(message ? message : "A operação não pôde ser concluída.");
             $(ERROR_TOAST).toast("show");

@@ -1,0 +1,142 @@
+{% macro docs(prefix_id='') %}
+    <div class="container">
+        <h2 class="text-center mt-5"> Documentação </h2>
+
+        <nav>
+            <div class="nav nav-tabs" role="tablist">
+                <button type="button" class="btn nav-item nav-link active" role="tab" data-toggle="tab" href="#automata-docs-content"> Autômatos </button>
+                <button type="button" class="btn nav-item nav-link" role="tab" data-toggle="tab" href="#grammar-docs-content"> Gramáticas </button>
+                <button type="button" class="btn nav-item nav-link" role="tab" data-toggle="tab" href="#regex-docs-content"> Expressões </button>
+            </div>
+        </nav>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="automata-docs-content" role="tabpanel">
+                <div class="p-3">
+                    <h5> Informações </h5>
+                    <ul>
+                        <li> O estado inicial de um autômato é representado pela cor laranja. </li>
+                        <li> Estados de aceitação de um autômato são indicados por suas bordas tracejadas. </li>
+                        <li> Para editar as propriedades de um estado ou transição, clique duas vezes em cima do mesmo na tela de edição. </li>
+                        <li> Na tela de operações, o segundo operando é ignorado pelas operações que são aplicadas sobre apenas um autômato. </li>
+                    </ul>
+                    <div class="row">
+                        <div class="col">
+                            <h5> Formato de arquivo </h5>
+                            <div class="m-1 p-3 border bg-light h-100">
+                                <p class="m-0 p-0"> número de estados </p>
+                                <p class="m-0 p-0"> estado inicial </p>
+                                <p class="m-0 p-0"> estados de aceitação </p>
+                                <p class="m-0 p-0"> alfabeto </p>
+                                <p class="m-0 p-0"> transição 1 </p>
+                                <p class="m-0 p-0"> transição 2 </p>
+                                <p class="m-0 p-0"> transição 3 </p>
+                                <p class="m-0 p-0"> transição 4 </p>
+                                <p class="m-0 p-0"> ... </p>
+                                <p class="m-0 p-0"> transição n </p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h5> Exemplo de arquivo </h5>
+                            <div class="m-1 p-3 border bg-light h-100">
+                                <p class="m-0 p-0"> 4 </p>
+                                <p class="m-0 p-0"> 0 </p>
+                                <p class="m-0 p-0"> 3 </p>
+                                <p class="m-0 p-0"> a,b,& </p>
+                                <p class="m-0 p-0"> 0,&,1-2 </p>
+                                <p class="m-0 p-0"> 1,a,1 </p>
+                                <p class="m-0 p-0"> 1,b,2 </p>
+                                <p class="m-0 p-0"> 2,a,1 </p>
+                                <p class="m-0 p-0"> 2,&,3 </p>
+                                <p class="m-0 p-0"> 3,b,3 </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="grammar-docs-content" role="tabpanel">
+                <div class="p-3">
+                    <h5> Informações </h5>
+                    <ul>
+                        <li> Por simplicidade, convencionou-se que o símbolo inicial sempre será S. </li>
+                        <li> Na edição de gramáticas, campos em branco serão ignorados. Porém, toda produção deve conter pelo menos um campo à direita preenchido. </li>
+                        <li> Para converter uma gramática em AFD é preciso que esta gramática seja regular.</li>
+                    </ul>
+
+                    <div class="row">
+                        <div class="col">
+                            <h5> Formato de arquivo </h5>
+                            <div class="m-1 p-3 border bg-light h-100">
+                                <p class="m-0 p-0"> símbolo inicial -> produção 1 | produção 2 | produção i </p>
+                                <p class="m-0 p-0"> 1-ésimo símbolo -> produção 1 | ... | produção j </p>
+                                <p class="m-0 p-0"> 2-ésimo símbolo -> produção 1 | ... | produção k </p>
+                                <p class="m-0 p-0"> 3-ésimo símbolo -> produção 1 | ... | produção l </p>
+                                <p class="m-0 p-0"> ... </p>
+                                <p class="m-0 p-0"> n-ésimo símbolo -> produção 1 | ... | produção m </p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h5> Exemplo de arquivo </h5>
+                            <div class="m-1 p-3 border bg-light h-100">
+                                <p class="m-0 p-0"> S -> aA | bB | & </p>
+                                <p class="m-0 p-0"> A -> aA | bA | a </p>
+                                <p class="m-0 p-0"> B -> aB | bB | b </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="regex-docs-content" role="tabpanel">
+                <div class="p-3">
+                    <h5> Informações </h5>
+                    <ul>
+
+                        <li>Variáveis são cercadas pelos símbolos <b>'<'</b> e <b>'>'</b>, respectivamente, no início e no final das definições e referências.</li>
+
+                        <li>O nome de uma variável pode conter tanto letras maiúsculas, quanto letras minúsculas.</li>
+
+                        <li>Para atribuir uma expressão regular para uma variável utiliza-se o símbolo <b>'<-'</b>.</li>
+
+                        <li>Os operadores de concatenação, união e fecho são, respectivamente, os caracteres <b>'.'</b>, <b>'+'</b> e <b>'*'</b>. Porém, no caso de caracteres do alfabeto (não vale para variáveis), pode-se abreviar a concatenação com a ausência de espaçamento.</li>
+
+                        <li>Aceita-se a extensão de múltiplas uniões, que inicia-se pelo caractere <b>'['</b> e termina-se pelo caractere <b>']'</b>. Entre o início e o fim, pode-se listar valores com espaçamento, além de, definir a união de todos os valores entre <i>a</i> e <i>b</i> com o uso do <b>'-'</b>.</li>
+
+                        <li>Outra extensão aceita é o uso do <b>'?'</b>, que define a expressão regular anterior pode ser nula.</li>
+
+                        <li>No final da definição, requer a declaração de fim com um ponto e vírgula.</li>
+
+                        <li>Ao transformar a expressão regular para um autômato finito determinístico, será identificado a expressão com mais dependências e essa será a expressão utilizada na conversão. Nos exemplos a baixo, serão criados os autômatos para as variáveis <b>D</b> e <b>id</b>.
+                    </ul>
+
+                    <div class="row">
+                        <div class="col">
+                            <h5> Formato de arquivo </h5>
+                            <div class="m-1 p-3 border bg-light h-100">
+                                <p class="m-0 p-0"> variável 1 <- expressão regular 1; </p>
+                                <p class="m-0 p-0"> variável 2 <- expressão regular 2; </p>
+                                <p class="m-0 p-0"> variável 3 <- expressão regular 3; </p>
+                                <p class="m-0 p-0"> ... </p>
+                                <p class="m-0 p-0"> variável n <- expressão regular n; </p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h5> Exemplos de arquivos</h5>
+                            <div class="m-1 p-3 border bg-light h-50">
+                                <p class="m-0 p-0"> &lt;A&gt; &lt;- a*; </p>
+                                <p class="m-0 p-0"> &lt;B&gt; &lt;- (c + d)* + a; </p>
+                                <p class="m-0 p-0"> &lt;C&gt; &lt;- a.b; </p>
+                                <p class="m-0 p-0"> &lt;D&gt; &lt;- (&lt;A&gt + &lt;C&gt;)* + &lt;B&gt;; </p>
+                            </div>
+                            <div class="m-1 p-3 border bg-light h-50">
+                                <p class="m-0 p-0"> &lt;letra&gt; &lt;- [a-z]; </p>
+                                <p class="m-0 p-0"> &lt;cletra&gt; &lt;- [A-Z]; </p>
+                                <p class="m-0 p-0"> &lt;dig&gt; &lt;- [0-9]; </p>
+                                <p class="m-0 p-0"> &lt;id&gt; &lt;- &lt;letra&gt; . (&lt;letra&gt; + &lt;cletra&gt; + &lt;dig&gt;)*; </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
