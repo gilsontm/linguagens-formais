@@ -39,6 +39,11 @@
             return data;
         }
 
+        $(CONVERT_TO_GRAMMAR_BTN).click(() => {
+            let data = get_single_data();
+            post_export("/automata/to-grammar", JSON.stringify(data), "automata-to-grammar.txt");
+        });
+
         function operate(operation, data, extra) {
             $.ajax({
                 type: "POST",
@@ -54,6 +59,7 @@
         $(MINIMIZE_BTN).click(() => operate("minimize", get_single_data(), "minimizado"));
         $(INTERSECT_BTN).click(() => operate("intersect", get_double_data(), "intersecção"));
         $(DETERMINIZE_BTN).click(() => operate("determinize", get_single_data(), "determinizado"));
+
 
     </script>
 
