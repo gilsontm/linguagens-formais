@@ -90,7 +90,22 @@
                 <div class="p-3">
                     <h5> Informações </h5>
                     <ul>
-                        <li> ...  </li>
+
+                        <li>Variáveis são cercadas pelos símbolos '<' e '>', respectivamente, no início e no final das definições e referências.</li>
+
+                        <li>O nome de uma variável pode conter tanto letras maiúsculas, quanto letras minúsculas.</li>
+
+                        <li>Para atribuir uma expressão regular para uma variável utiliza-se o símbolo '<-'.</li>
+
+                        <li>Os operadores de concatenação, união e fecho são, respectivamente, os caracteres <b>'.'</b>, <b>'+'</b> e <b>'*'</b>. Porém, no caso de caracteres do alfabeto (não vale para variáveis), pode-se abreviar a concatenação com a ausência de espaçamento.</li>
+
+                        <li>Aceita-se a extensão de múltiplas uniões, que inicia-se pelo caractere <b>'['</b> e termina-se pelo caractere <b>']'</b>. Entre o início e o fim, pode-se listar valores com espaçamento, além de, definir a união de todos os valores entre <i>a</i> e <i>b</i> com o uso do <b>'-'</b>.</li>
+
+                        <li>Outra extensão aceita é o uso do <b>'?'</b>, que define a expressão regular anterior pode ser nula.</li>
+
+                        <li>No final da definição, requer a declaração de fim com um ponto e vírgula.</li>
+
+                        <li>Ao transformar a expressão regular para um autômato finito determinístico, será identificado a expressão com mais dependências e essa será a expressão utilizada na conversão. Nos exemplos a baixo, serão criados os autômatos para às variáveis <b>D</b> e <b>id</b>.
                     </ul>
 
                     <div class="row">
@@ -105,12 +120,19 @@
                             </div>
                         </div>
                         <div class="col">
-                            <h5> Exemplo de arquivo </h5>
+                            <h5> Exemplo de entrada (1)</h5>
                             <div class="m-1 p-3 border bg-light h-100">
-                                <p class="m-0 p-0"> A <- a*; </p>
-                                <p class="m-0 p-0"> B <- (c + d)* + a; </p>
-                                <p class="m-0 p-0"> C <- a.b; </p>
-                                <p class="m-0 p-0"> D <- (A + C)* + B; </p>
+                                <p class="m-0 p-0"> &lt;A&gt; &lt;- a*; </p>
+                                <p class="m-0 p-0"> &lt;B&gt; &lt;- (c + d)* + a; </p>
+                                <p class="m-0 p-0"> &lt;C&gt; &lt;- a.b; </p>
+                                <p class="m-0 p-0"> &lt;D&gt; &lt;- (&lt;A&gt + &lt;C&gt;)* + &lt;B&gt; </p>
+                            </div>
+                            <h5> Exemplo de entrada (2)</h5>
+                            <div class="m-1 p-3 border bg-light h-100">
+                                <p class="m-0 p-0"> &lt;letra&gt; &lt;- [a-z]; </p>
+                                <p class="m-0 p-0"> &lt;cletra&gt; &lt;- [A-Z]; </p>
+                                <p class="m-0 p-0"> &lt;dig&gt; &lt;- [0-9]; </p>
+                                <p class="m-0 p-0"> &lt;id&gt; &lt;- &lt;letra&gt; . (&lt;letra&gt; + &lt;cletra&gt; + &lt;dig&gt;)*; </p>
                             </div>
                         </div>
                     </div>
