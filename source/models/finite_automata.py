@@ -459,6 +459,8 @@ class FiniteAutomata:
             from_state = automaton.states[from_state_id]
             from_class = minimized_automaton.states[from_class_id]
             for symbol in from_state.transition:
+                if len(from_state.transition[symbol]) == 0:
+                    continue
                 to_state = from_state.transition[symbol][0]
                 to_class_id = mapping[to_state.id]
                 to_class = minimized_automaton.states[to_class_id]
@@ -558,6 +560,8 @@ class FiniteAutomata:
                         else:
                             W.add(difference)
                 P = PP
+        if frozenset() in P:
+            P.remove(frozenset())
         return P
 
     def powerset(s):
