@@ -1,5 +1,5 @@
 def is_operand(ch):
-	return ch.isalpha() or ch == '#' or ch == '&'
+	return ch.isalpha() or ch.isdigit() or ch == '#' or ch == '&'
 
 def is_capital(ch):
 	begin = ord('A')
