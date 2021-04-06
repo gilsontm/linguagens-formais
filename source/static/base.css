@@ -9,8 +9,12 @@ svg.bi {
 }
 
 .vertical-menu {
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    width: 15%;
     height: 100%;
-    height: 100vh;
 }
 
 .custom-file-input ~ .custom-file-label::after {
