@@ -1,6 +1,5 @@
-from abc import ABCMeta, abstractmethod
+import models.regex_utils as re
 
-import models.re_utils as re
 
 class Tree:
 
@@ -45,7 +44,7 @@ class TreeNode():
 	"""
 		Nodo da árvore, armazena informações sobre nodo pai,
 		filho a esquerda e filho a direita.
-		Atualmente lida principalmente com syntaxes em que nodos possuem 
+		Atualmente lida principalmente com syntaxes em que nodos possuem
 		no máximo dois filhos
 	"""
 	def __init__(self, symbol, tree, type_, id_ = -1):
@@ -102,7 +101,7 @@ class TreeNode():
 			return {self.id_}
 
 		"""
-			"If n is an union node with left child c1 and right child c2, 
+			"If n is an union node with left child c1 and right child c2,
 			then first_pos(n) is first_pos(c1) U first_pos(c2)"
 		"""
 		if self.type() == Tree.OPERATOR and self.symbol == '+':
@@ -111,9 +110,9 @@ class TreeNode():
 		"""
 			"If n is a cat-node with left child c1 and right child c2:
 
-			if nullable(c1), then 
+			if nullable(c1), then
 				first_pos(n) is first_pos(c1) U first_pos(c2),
-			else, 
+			else,
 				first_pos(n) is first_pos(c1)
 			"
 		"""
@@ -144,7 +143,7 @@ class TreeNode():
 			return {self.id_}
 
 		"""
-			"If n is an union node with left child c1 and right child c2, 
+			"If n is an union node with left child c1 and right child c2,
 			then last_pos(n) is last_pos(c1) U last_pos(c2)"
 		"""
 		if self.type() == Tree.OPERATOR and self.symbol == '+':
@@ -153,9 +152,9 @@ class TreeNode():
 		"""
 			"If n is a cat-node with left child c1 and right child c2:
 
-			if nullable(c2), then 
+			if nullable(c2), then
 				last_pos(n) is last_pos(c1) U last_pos(c2),
-			else, 
+			else,
 				last_pos(n) is last_pos(c2)
 			"
 		"""
@@ -186,19 +185,19 @@ class TreeNode():
 			return False
 
 		"""
-			"If n is an union node with left child c1 and right child c2, 
+			"If n is an union node with left child c1 and right child c2,
 			then nullable(n) is nullable(c1) or nullable(c2)"
 		"""
 		if self.type() == Tree.OPERATOR and self.symbol == '+':
 			return self.left.__calculate_nullable() or self.right.__calculate_nullable()
-		
+
 		"""
 			"If n is a cat-node with left child c1 and right child c2,
 			then nullable(n) is nullable(c1) and nullable(c2)"
 		"""
 		if self.type() == Tree.OPERATOR and self.symbol == '.':
 			return self.left.__calculate_nullable() and self.right.__calculate_nullable()
-		
+
 		"""
 			"If n is a star-node, then nullable(n) is True"
 		"""
@@ -225,7 +224,7 @@ class TreeNode():
 	def get_follow_pos(self):
 		return self.follow_pos
 
-	# Recebe uma função como parâmetro e aplica-a à todos os nodos recursivamente 
+	# Recebe uma função como parâmetro e aplica-a à todos os nodos recursivamente
 	def recursive_call(self, function):
 		if self.left:
 			self.left.recursive_call(function)
@@ -251,7 +250,7 @@ class TreeNode():
 	"""
 		Função para calcular o 'follow_pos' segundo o algoritmo de Aho.
 		"for finding followpos only star(*) and concat(.) nodes will
-		 be considered"		
+		 be considered"
 	"""
 	def calculate_follow_pos(self):
 		"""
@@ -267,7 +266,7 @@ class TreeNode():
 		"""
 			"if n is concatenation-node with left child c1 and right child c2,
 			 and i is a position in lastpos(c1), then all positions in firstpos(c2)
-			 are in followpos(i)"		
+			 are in followpos(i)"
 		"""
 		if self.type() == Tree.OPERATOR and self.symbol == '.':
 			last_pos_c1 = self.left.get_last_pos()

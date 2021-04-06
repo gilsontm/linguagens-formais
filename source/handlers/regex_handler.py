@@ -4,7 +4,7 @@ from utils import messages
 from models.regex import Regex
 from utils.path import get_file_path
 from exceptions.invalid_usage import InvalidUsage
-from models.regular_expression_interface import RegularExpressionInterface
+from models.regex_interface import RegularExpressionInterface
 
 
 blueprint = Blueprint("regex", __name__)
