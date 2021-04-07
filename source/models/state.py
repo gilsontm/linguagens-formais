@@ -51,6 +51,12 @@ class State:
         return False
 
     """
+        Checks if state has at least one transition by a given symbol
+    """
+    def has_transition_by_symbol(self, symbol):
+        return symbol in self.transition and len(self.transition[symbol]) > 0
+
+    """
         Returns name of state
     """
     def get_name(self):

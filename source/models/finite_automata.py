@@ -3,7 +3,6 @@ import copy
 from models.state import State
 
 
-
 """
     Finite automata class;
     The automata structure stores separetly the initial and final states ids;
@@ -386,23 +385,36 @@ class FiniteAutomata:
         return new_automaton
 
     """
+        adds missing transitions to a dead state, if there's any
+    """
+    def complete_states(self, alphabet=None):
+        if alphabet is None:
+            alphabet = self.alphabet()
+        dead_state = None
+        states = list(self.states.values())
+        for symbol in alphabet:
+            for from_state in states:
+                if not from_state.has_transition_by_symbol(symbol):
+                    if dead_state is None:
+                        dead_state = self.add_state("dead")
+                    self.add_transition(symbol, from_state, dead_state)
+        if dead_state is not None:
+            for symbol in alphabet:
+                self.add_transition(symbol, dead_state, dead_state)
+
+    """
         returns the complement of a given automaton
         if the automaton is non-deterministic, it is first determinized
     """
-    def complement(automaton):
-
+    def complement(automaton, alphabet=None):
         if (not automaton.is_deterministic()):
             new_automaton = FiniteAutomata.determinize(automaton)
         else:
             new_automaton = copy.deepcopy(automaton)
-
-
+        new_automaton.complete_states(alphabet)
         state_ids = list(new_automaton.states.keys())
-
         new_final_ids = [item for item in state_ids if item not in new_automaton.final_ids]
-
         new_automaton.final_ids = new_final_ids
-
         return new_automaton
 
     """
@@ -410,40 +422,31 @@ class FiniteAutomata:
         uses de morgan
     """
     def intersect(automaton_1, automaton_2):
-        complement_1 = FiniteAutomata.complement(automaton_1)
-        complement_2 = FiniteAutomata.complement(automaton_2)
-
+        alphabet_1 = automaton_1.alphabet()
+        alphabet_2 = automaton_2.alphabet()
+        alphabet = list(set(alphabet_1 + alphabet_2))
+        complement_1 = FiniteAutomata.complement(automaton_1, alphabet)
+        complement_2 = FiniteAutomata.complement(automaton_2, alphabet)
         unification_of_complements = FiniteAutomata.unify(complement_1, complement_2)
-
         intesection = FiniteAutomata.complement(unification_of_complements)
         intesection.rename_states()
-
         return intesection
 
     """
-        minimizes the automaton and returns:
-            - (True, minimized_automaton) if the minimization is successul
-            - (False, None) if the minimization fails (i.e. the automaton is invalid)
+        returns a minimized automaton
     """
     def minimize(automaton_in):
         automaton = copy.deepcopy(automaton_in)
         if (not automaton.is_deterministic()):
             automaton = FiniteAutomata.determinize(automaton)
-
         automaton.remove_unreachable_states()
-        if not automaton.valid():
-            return False, None
-
         automaton.remove_dead_states()
-        if not automaton.valid():
-            return False, None
-
         minimized_automaton = FiniteAutomata()
+
         equivalence_classes = automaton.get_equivalence_classes()
         equivalence_classes = tuple(equivalence_classes)
 
         mapping = {}
-
         for class_id, class_set in enumerate(equivalence_classes):
             mapping.update({state_id : class_id for state_id in class_set})
             name = ", ".join(map(lambda x: f"q{x}", class_set))
@@ -453,7 +456,6 @@ class FiniteAutomata:
                 minimized_automaton.set_initial_state(state)
             if len(class_set.intersection(set(automaton.final_ids))) > 0:
                 minimized_automaton.add_final_state(state)
-
         for from_class_id, from_class_set in enumerate(equivalence_classes):
             from_state_id = tuple(from_class_set)[0]
             from_state = automaton.states[from_state_id]
@@ -465,13 +467,11 @@ class FiniteAutomata:
                 to_class_id = mapping[to_state.id]
                 to_class = minimized_automaton.states[to_class_id]
                 minimized_automaton.add_transition(symbol, from_class, to_class)
-
         minimized_automaton.rename_states()
-        return True, minimized_automaton
+        return minimized_automaton
 
     """
         removes unreachable states from the automaton
-        DANGER: this can invalidate the automaton (example: all final states could be removed)
     """
     def remove_unreachable_states(self):
         reachable_states = set([self.initial_id])
@@ -494,7 +494,6 @@ class FiniteAutomata:
 
     """
         removes dead states from the automaton
-        DANGER: this can invalidate the automaton (example: initial and/or final states could be removed)
     """
     def remove_dead_states(self):
         alive_states = set(self.final_ids)
@@ -510,7 +509,7 @@ class FiniteAutomata:
             remaining_states = temp - alive_states
             alive_states = alive_states.union(remaining_states)
 
-        dead_states = set(self.states.keys()) - alive_states
+        dead_states = (set(self.states.keys()) - set([self.initial_id])) - alive_states
         for dead_state_id in dead_states:
             self.states.pop(dead_state_id, None)
 
@@ -518,9 +517,6 @@ class FiniteAutomata:
             for dead_state_id in dead_states:
                 state.remove_transitions_to(dead_state_id)
         self.final_ids = [item for item in self.final_ids if item in alive_states]
-
-        if self.initial_id in dead_states:
-            initial_id = None
 
     """
         removes equivalent states from the automaton
