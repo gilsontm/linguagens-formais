@@ -7,16 +7,31 @@
         <div>
             <div class="input-group my-2">
                 <div class="input-group-prepend">
-                    <label class="input-group-text"> Operando 1 </label>
+                    <label class="input-group-text"> Operando 1&nbsp; </label>
                 </div>
                 <select id="{{prefix_id}}-operand-1" class="custom-select {{prefix_id}}-automata-select"> </select>
             </div>
 
             <div class="input-group my-2">
                 <div class="input-group-prepend">
-                    <label class="input-group-text"> Operando 2 </label>
+                    <label class="input-group-text"> Operando 2* </label>
                 </div>
                 <select id="{{prefix_id}}-operand-2" class="custom-select {{prefix_id}}-automata-select"> </select>
+            </div>
+            <small> *Considerado somente pelas operações que utilizam dois operandos (isto é, união e intersecção). </small>
+        </div>
+
+        <div class="position-fixed top-0 right-0 p-3" style="z-index: 5; right: 0; top: 0;">
+            <div id="new-automata-toast" role="alert" class="toast" data-delay="3000">
+                <div class="toast-header px-3">
+                    <h4 class="text-dark my-2 mr-5"> Novo autômato criado! </h4>
+                    <button type="button" class="ml-auto mb-1 close" data-dismiss="toast">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="toast-body px-3">
+                    <span> Um novo autômato foi gerado. </span>
+                </div>
             </div>
         </div>
     </div>
@@ -50,7 +65,10 @@
                 url: `/automata/${operation}`,
                 data: JSON.stringify(data),
                 contentType: "application/json",
-                success: res => import_automata(res, extra),
+                success: res => {
+                    import_automata(res, extra);
+                    $(NEW_AUTOMATA_TOAST).toast("show");
+                },
                 error: res => show_error(res),
             });
         }
