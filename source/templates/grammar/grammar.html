@@ -35,15 +35,48 @@
 
         const GRAMMAR_FORM_TEMPLATE = `{{ form(prefix_id=prefix_id) }}`;
         const GRAMMAR_FORM = ".{{prefix_id}}-grammar-form";
+        const GRAMMAR_FORM_ROW = ".{{prefix_id}}-grammar-form-row";
         const GRAMMAR_CONTAINER = "#{{prefix_id}}-grammar-container";
         const ADD_SENTENCE = "#{{prefix_id}}-add-sentence";
         const REMOVE_SENTENCE = ".{{prefix_id}}-remove-sentence";
+        const ADD_FORM_ROW = ".{{prefix_id}}-add-form-row";
         const CLEAR_SENTENCES = "#{{prefix_id}}-clear-sentences";
         const CONVERT_GRAMMAR_BTN = "#{{prefix_id}}-grammar-to-automata";
+        const ROW_FIELD_TEMPLATE = `
+            <div class="col-1 m-1">
+                <input type="text" class="form-control"/>
+            </div>
+            <div class="col-1 m-1">
+                <input type="text" class="form-control"/>
+            </div>
+            <div class="col-1 m-1">
+                <input type="text" class="form-control"/>
+            </div>
+            <div class="col-1 m-1">
+                <input type="text" class="form-control"/>
+            </div>
+            <div class="col-1 m-1">
+                <input type="text" class="form-control"/>
+            </div>
+            <div class="col-1 m-1">
+                <input type="text" class="form-control"/>
+            </div>
+            <div class="col-1 m-1">
+                <input type="text" class="form-control"/>
+            </div>
+            <div class="col-1 m-1">
+                <input type="text" class="form-control"/>
+            </div>
+            <div class="col-1 m-1">
+                <input type="text" class="form-control"/>
+            </div>
+            <div class="col-1 m-1">
+                <input type="text" class="form-control"/>
+            </div>
+        `;
 
         $(ADD_SENTENCE).click(() => {
             $(GRAMMAR_CONTAINER).append(GRAMMAR_FORM_TEMPLATE);
-            set_grammar_form_listener();
         });
 
         $(CLEAR_SENTENCES).click(clear_grammar_form);
@@ -53,32 +86,40 @@
             post_export("/grammar/to-automata", JSON.stringify(data), "grammar-to-automata.txt");
         });
 
-        function set_grammar_form_listener() {
-            $(REMOVE_SENTENCE).click(event => {
-                $(event.target).closest(GRAMMAR_FORM).remove();
-            });
+        $("body").on("click", ADD_FORM_ROW, event => {
+            add_grammar_form_row($(event.target).closest(GRAMMAR_FORM));
+        });
+
+        $("body").on("click", REMOVE_SENTENCE, event => {
+            $(event.target).closest(GRAMMAR_FORM).remove()
+        });
+
+        function add_grammar_form_row(selector) {
+            $(selector).find(GRAMMAR_FORM_ROW).first().append(ROW_FIELD_TEMPLATE);
         }
 
         function clear_grammar_form() {
             $(REMOVE_SENTENCE).closest(GRAMMAR_FORM).remove();
-            $(`${GRAMMAR_FORM} input[type=text]:enabled`).val("");
+            $(GRAMMAR_FORM).find(GRAMMAR_FORM_ROW).first().html(ROW_FIELD_TEMPLATE);
         }
 
         function import_grammar(grammar) {
             clear_grammar_form();
-            let fields;
+            let selector, fields, rows;
             for (key in grammar) {
                 if (key == 'S') {
-                    fields = $(`${GRAMMAR_CONTAINER} ${GRAMMAR_FORM}:first-child input[type=text]:enabled`);
+                    selector = `${GRAMMAR_CONTAINER} ${GRAMMAR_FORM}:first-child`;
                 } else {
                     $(GRAMMAR_CONTAINER).append(GRAMMAR_FORM_TEMPLATE);
-                    set_grammar_form_listener();
-                    fields = $(`${GRAMMAR_CONTAINER} ${GRAMMAR_FORM}:last-child input[type=text]`);
-                    $(fields[0]).val(key);
-                    fields = fields.slice(1);
+                    selector = `${GRAMMAR_CONTAINER} ${GRAMMAR_FORM}:last-child`;
                 }
+                rows = Math.ceil(grammar[key].length / 10);
+                for (let i = 1; i < rows; i++)
+                    add_grammar_form_row(selector);
+                fields = $(`${selector} input[type=text]`);
+                $(fields[0]).val(key);
                 for (let i = 0; i < grammar[key].length; i++)
-                    $(fields[i]).val(grammar[key][i]);
+                    $(fields[i+1]).val(grammar[key][i]);
             }
         }
 
@@ -100,10 +141,6 @@
             }
             return grammar;
         }
-
-        $(document).ready(() => {
-            set_grammar_form_listener();
-        });
     </script>
 
 {% endmacro %}

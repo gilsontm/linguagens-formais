@@ -15,11 +15,10 @@
         {% from 'regex/regex.html' import regex %}
         {% from 'grammar/grammar.html' import grammar %}
         {% from 'automata/automata.html' import automata %}
+
+        {{ menu() }}
         <div class="row no-gutters">
-            <div class="col-2">
-                {{ menu() }}
-            </div>
-            <div class="col-10">
+            <div class="offset-2 col-10">
                 <div class="tab-content mt-5">
                     <div role="tabpanel" id="content-3" class="tab-pane fade">
                         {{ regex(prefix_id="1") }}

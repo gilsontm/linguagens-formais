@@ -90,24 +90,17 @@
                 <div class="p-3">
                     <h5> Informações </h5>
                     <ul>
-
-                        <li>Variáveis são cercadas pelos símbolos <b>'<'</b> e <b>'>'</b>, respectivamente, no início e no final das definições e referências.</li>
-
-                        <li>O nome de uma variável pode conter tanto letras maiúsculas, quanto letras minúsculas.</li>
-
-                        <li>Para atribuir uma expressão regular para uma variável utiliza-se o símbolo <b>'<-'</b>.</li>
-
-                        <li>Os operadores de concatenação, união e fecho são, respectivamente, os caracteres <b>'.'</b>, <b>'+'</b> e <b>'*'</b>. Porém, no caso de caracteres do alfabeto (não vale para variáveis), pode-se abreviar a concatenação com a ausência de espaçamento.</li>
-
-                        <li>Aceita-se a extensão de múltiplas uniões, que inicia-se pelo caractere <b>'['</b> e termina-se pelo caractere <b>']'</b>. Entre o início e o fim, pode-se listar valores com espaçamento, além de, definir a união de todos os valores entre <i>a</i> e <i>b</i> com o uso do <b>'-'</b>.</li>
-
-                        <li>Outra extensão aceita é o uso do <b>'?'</b>, que define a expressão regular anterior pode ser nula.</li>
-
-                        <li>No final da definição, requer a declaração de fim com um ponto e vírgula.</li>
-
-                        <li>Ao transformar a expressão regular para um autômato finito determinístico, será identificado a expressão com mais dependências e essa será a expressão utilizada na conversão. Nos exemplos a baixo, serão criados os autômatos para as variáveis <b>D</b> e <b>id</b>.
+                        <li> Variáveis são cercadas pelos símbolos <b><</b> e <b>></b>.</li>
+                        <li> O nome de uma variável pode conter tanto letras maiúsculas quanto minúsculas.</li>
+                        <li> Para atribuir uma expressão regular para uma variável utiliza-se o símbolo <b><-</b>.</li>
+                        <li> Toda declaração devem terminada com ponto e vírgula.</li>
+                        <li> Os operadores de concatenação, união e fecho são, respectivamente, os caracteres de ponto, soma e asterísco. </li>
+                        <li> No caso de caracteres do alfabeto (não vale para variáveis), pode-se abreviar a concatenação através da ausência de espaçamento.</li>
+                        <li> A extensão de múltiplas uniões é indicada pelo uso de colchetes. A expressão <b>[a-z]</b>, por exemplo, indica todos os caracteres entre <b>a</b> e <b>z</b>.</li>
+                        <li> O uso do ponto de interrogação indica que a expressão regular anterior pode ser nula.</li>
+                        <li> Ao transformar a expressão regular para um autômato finito determinístico, a variável com mais dependências será utilizada na conversão. </li>
+                        <li> Nos exemplos a baixo, serão criados os autômatos para as variáveis <b>D</D></b> e <b>id</b>.
                     </ul>
-
                     <div class="row">
                         <div class="col">
                             <h5> Formato de arquivo </h5>

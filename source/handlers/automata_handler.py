@@ -76,9 +76,7 @@ class AutomataHandler:
 
     @blueprint.route("/minimize", methods=["POST"])
     def minimize_automata():
-        valid, automata = FiniteAutomata.minimize(g.automata)
-        if not valid:
-            raise InvalidUsage(messages.INVALID_AUTOMATA)
+        automata = FiniteAutomata.minimize(g.automata)
         return automata.to_json()
 
     @blueprint.route("/step", methods=["POST"])

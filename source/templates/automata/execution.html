@@ -6,6 +6,34 @@
         <div id="{{prefix_id}}-execution-container" class="bg-light border h-50vh"> </div>
 
         <div id="{{prefix_id}}-states-container" class="states-container border bg-light mt-2 "> </div>
+
+        <div class="position-fixed top-0 right-0 p-3" style="z-index: 5; right: 0; top: 0;">
+            <div id="accept-word-toast" role="alert" class="toast" data-delay="3000">
+                <div class="toast-header px-3">
+                    <h4 class="text-dark my-2 mr-5"> Palavra aceita! </h4>
+                    <button type="button" class="ml-auto mb-1 close" data-dismiss="toast">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="toast-body px-3">
+                    <span> A palavra foi aceita pelo autômato. </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="position-fixed top-0 right-0 p-3" style="z-index: 5; right: 0; top: 0;">
+            <div id="reject-word-toast" role="alert" class="toast" data-delay="3000">
+                <div class="toast-header px-3">
+                    <h4 class="text-dark my-2 mr-5"> Palavra rejeitada! </h4>
+                    <button type="button" class="ml-auto mb-1 close" data-dismiss="toast">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="toast-body px-3">
+                    <span> A palavra foi rejeitada pelo autômato.</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="text/javascript">
@@ -129,8 +157,11 @@
                 dataType: 'json',
                 processData: false,
                 contentType: 'application/json; charset=utf-8',
-                success: function(data) {
-                    alert(data.accepted)
+                success: res => {
+                    if (res.accepted)
+                        $(ACCEPT_WORD_TOAST).toast("show");
+                    else
+                        $(REJECT_WORD_TOAST).toast("show");
                 },
                 error: res => show_error(res),
             })
