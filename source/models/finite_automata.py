@@ -424,7 +424,7 @@ class FiniteAutomata:
     def intersect(automaton_1, automaton_2):
         alphabet_1 = automaton_1.alphabet()
         alphabet_2 = automaton_2.alphabet()
-        alphabet = list(set(alphabet_1 + alphabet_2))
+        alphabet = list(set(alphabet_1 + alphabet_2) - set(['&']))
         complement_1 = FiniteAutomata.complement(automaton_1, alphabet)
         complement_2 = FiniteAutomata.complement(automaton_2, alphabet)
         unification_of_complements = FiniteAutomata.unify(complement_1, complement_2)
