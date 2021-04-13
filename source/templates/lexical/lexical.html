@@ -1,0 +1,25 @@
+{% from 'lexical/creation.html' import creation %}
+{% from 'lexical/analysis.html' import analysis %}
+
+
+{% macro lexical(prefix_id='') %}
+    <div class="container">
+        <h2 class="text-center mt-5"> Análise Léxica </h2>
+
+        <nav>
+            <div class="nav nav-tabs" role="tablist">
+                <button type="button" class="btn nav-item nav-link active" role="tab" data-toggle="tab" href="#lexical-creation-content"> Criação </button>
+                <button type="button" class="btn nav-item nav-link" role="tab" data-toggle="tab" href="#lexical-analysis-content"> Análise </button>
+            </div>
+        </nav>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="lexical-creation-content" role="tabpanel">
+                {{ creation(prefix_id=prefix_id) }}
+            </div>
+            <div class="tab-pane fade" id="lexical-analysis-content" role="tabpanel">
+                {{ analysis(prefix_id=prefix_id) }}
+            </div>
+        </div>
+    </div>
+{% endmacro %}
