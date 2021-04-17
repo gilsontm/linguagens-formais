@@ -337,51 +337,26 @@ class FiniteAutomata:
             if not (FiniteAutomata.to_closure_string(state_list) in new_states):
                 FiniteAutomata.determinization_recursion(automaton, state_list, epsilon_closure, new_states)
 
-    """
-        returns the unification of two given automata
-    """
-    def unify(automaton_1_in, automaton_2_in):
-        automaton_1 = copy.deepcopy(automaton_1_in)
-        automaton_2 = copy.deepcopy(automaton_2_in)
-
+    """ returns the union between two or more automata """
+    def unify(*automata_in, rename=True):
+        automata = [copy.deepcopy(automaton) for automaton in automata_in]
         new_automaton = FiniteAutomata()
 
-        new_states = {}
-        new_final_states = []
-
-
-        new_automaton.states = new_states
-        new_automaton.final_ids = new_final_states
         new_automaton.initial_id = 0
+        initial_state = State(0, "q0")
+        new_automaton.states[0] = initial_state
 
-        """
-            adds a new initial state
-            wich epsilon transit to the initial states
-            of the given automatum
-        """
-        inital_state = State(0,"q0")
-        inital_state.add_transition('&',automaton_1.states[automaton_1.initial_id])
-        inital_state.add_transition('&',automaton_2.states[automaton_2.initial_id])
-        new_states[0] = inital_state
-
-        #changes automaton_1 states ids
-        for state_id, state in automaton_1.states.items():
-            state.id = state_id+1
-            new_states[state_id+1] = state
-            if state_id in automaton_1.final_ids:
-                new_final_states.append(state_id+1)
-
-        #changes automaton_2 states ids
-        automata_2_state_count = len(automaton_1.states);
-        for state_id, state in automaton_2.states.items():
-            automata_2_state_count += 1
-            state.id = automata_2_state_count
-            new_states[automata_2_state_count] = state
-            if state_id in automaton_2.final_ids:
-                new_final_states.append(automata_2_state_count)
-
-        new_automaton.rename_states()
-
+        state_count = 0
+        for automaton in automata:
+            initial_state.add_transition("&", automaton.states[automaton.initial_id])
+            for state_id, state in automaton.states.items():
+                state_count += 1
+                state.id = state_count
+                new_automaton.states[state_count] = state
+                if state_id in automaton.final_ids:
+                    new_automaton.final_ids.append(state_count)
+        if rename:
+            new_automaton.rename_states()
         return new_automaton
 
     """
