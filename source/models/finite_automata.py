@@ -84,42 +84,25 @@ class FiniteAutomata:
         First the json representation is built,
         then is the required format;
     """
-    def to_file(self, file_path):
-        if (not self.valid()):
-            print('*****NOT VALID*****')
+    def to_file(self, file_path, with_names=True):
+        if not self.valid():
             return False
 
-        transition_map = {}
-        symbol_set = set()
-
         with open(file_path, "w") as f:
-            f.write(str(len(self.states))+ '\n')
-            f.write(str(self.initial_id)+ '\n')
-            for final_id in self.final_ids:
-                f.write(str(final_id))
-                if final_id != self.final_ids[-1]:
-                    f.write(',')
+            f.write(f"{len(self.states)}\n")
+            f.write(f"{self.initial_id}\n")
+            f.write(f"{','.join([str(final_id) for final_id in self.final_ids])}\n")
+            alphabet = self.alphabet()
+            f.write(f"{','.join(alphabet)}\n")
 
-            f.write('\n')
+            for from_id, from_state in self.states.items():
+                for symbol in from_state.transition:
+                    to_ids = [str(to_state.id) for to_state in from_state.transition[symbol]]
+                    f.write(f"{from_id},{symbol},{'-'.join(to_ids)}\n")
 
-            self.to_json()
-            for transition in self.json_automata['transitions']:
-                for symbol in transition['values']:
-                    symbol_set.add(symbol)
-                    key = str(transition['from'])+","+symbol
-                    if not(key in transition_map):
-                        transition_map[key] = ""
-                    transition_map[key] += str(transition['to'])+"-"
-
-            symbol_set_string = ""
-            for value in symbol_set:
-                symbol_set_string+= value+","
-
-            if symbol_set_string != "":
-                f.write(symbol_set_string[:-1]+'\n')
-
-            for key, value in transition_map.items():
-                f.write(key+","+value[:-1]+'\n')
+            if with_names:
+                for state_id, state in self.states.items():
+                    f.write(f"{state_id}:{state.name}\n")
         return True
 
     """
@@ -137,6 +120,10 @@ class FiniteAutomata:
                     self.final_ids.append(int(final_state))
 
             for i in range(4,len(lines)):
+                if ":" in lines[i]:
+                    state_id, name = lines[i].split(":")
+                    self.states[int(state_id)].name = name.replace("\n", "")
+                    continue
                 transition = lines[i].split(',')
                 from_state = int(transition[0])
                 if not (from_state in self.states):
@@ -166,7 +153,12 @@ class FiniteAutomata:
         self.json_automata['transitions'] = []
 
         for from_id, from_state in self.states.items():
-            self.json_automata['states'].append({"id": from_state.id, "name": from_state.name, "final": (from_state.id in self.final_ids), "initial": (from_state.id == self.initial_id)})
+            self.json_automata['states'].append({
+                "id": from_state.id,
+                "name": from_state.name,
+                "final": (from_state.id in self.final_ids),
+                "initial": (from_state.id == self.initial_id)
+            })
 
             for symbol, to_states in from_state.transition.items():
                 for to_id in to_states:
@@ -178,7 +170,11 @@ class FiniteAutomata:
 
         for from_id, to_state_n_values in transition_map.items():
             for to_state, values in to_state_n_values.items():
-                self.json_automata['transitions'].append({"from": from_id, "to": to_state.id, "values": values})
+                self.json_automata['transitions'].append({
+                    "from": from_id,
+                    "to": to_state.id,
+                    "values": values
+                })
         return self.json_automata
 
     """
