@@ -23,7 +23,7 @@
         </div>
     </div>
 
-    <script type="module">
+    <script type="text/javascript">
         const INPUT_LEXEME_REGEX = "#{{prefix_id}}-lexical-expressions";
         const INPUT_PRIMITIVES_REGEX = "#{{prefix_id}}-lexical-dependencies";
         const BUILD_LEXICAL_ANALYSER_BTN = "#{{prefix_id}}-create-analyzer";
@@ -45,26 +45,26 @@
             }
 
             if (valid) {
-                let json = format_regex_json(primitives, lexeme_expresssion);
+                let json = format_lexical_regex_json(primitives, lexeme_expresssion);
                 $.ajax({
                     type: "POST",
-                    url: "/regex/to-automata",
+                    url: "/lexical/create-analyzer",
                     data: JSON.stringify(json),
                     contentType: "application/json",
-                    success: res => download(res, "automata.txt"),
+                    success: res => download(res, "analyzer.txt"),
                     error: res => show_error(res),
                 });
             }
         }
 
-        function format_regex_json(primitives, lexemes) {
+        function format_lexical_regex_json(primitives, lexemes) {
             let json = {}
-            format_regex_json_entry(primitives, json, "dependencies")
-            format_regex_json_entry(lexemes, json, "expressions")
+            format_lexical_regex_json_entry(primitives, json, "dependencies");
+            format_lexical_regex_json_entry(lexemes, json, "expressions");
             return json
         }
 
-        function format_regex_json_entry(text, json, key) {
+        function format_lexical_regex_json_entry(text, json, key) {
             json[key] = []
             let elements;
             let parsed = text;
