@@ -36,9 +36,16 @@ class LexicalAnalyzer:
                 automaton.states[state_id].name = key
             automata.append(automaton)
 
-        # Faz a união dos autômatos gerados
         analyser = LexicalAnalyzer()
-        analyser.automaton = FiniteAutomata.unify(*automata, rename=False)
+        # Faz a união dos autômatos gerados
+        automaton = FiniteAutomata.unify(*automata, rename=False)
+        # Renomeia os estados que não são finais para "q", pois não são importantes
+        for state_id, state in automaton.states.items():
+            if not (state_id in automaton.final_ids):
+                state.name = "q"
+        # Determiniza o autômato resultante da união
+        automaton = FiniteAutomata.determinize(automaton)
+        analyser.automaton = automaton
         return analyser
 
     def to_file(self, file_path):
