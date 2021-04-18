@@ -7,6 +7,8 @@ class LexicalAnalyzer:
 
     def __init__(self):
         self.automaton = None
+        self.lexemes = None
+        self.tokens = {}
 
     @staticmethod
     def from_file(file_path):
@@ -52,3 +54,48 @@ class LexicalAnalyzer:
         if self.automaton is None:
             return False
         return self.automaton.to_file(file_path)
+    
+    def run_analysis(self):
+        while self.lexemes:
+            token = self.request_token()
+            if token["name"]:
+                self.__add_token(token)
+    
+    def load_source_code(self, code):
+        self.lexemes = code.split()
+        
+    def request_token(self):
+        # Os lexemas sao lidos do ultimo ao primeiro
+        lexem = self.lexemes.pop()
+        
+        step = 0
+        state_id = self.automaton.initial_id
+        result = {}
+
+        # Alimenta o automato com a palavra e retorna o resultado
+        while (len(lexem) >= step):
+            result = self.automaton.step_forward(state_id,step,lexem)
+            if not result["processing"]:
+               break
+
+            step += 1
+            state_id = result["next_states"][0]
+        
+        # Palavras nao aceitas retornam um token com valores vazios
+        if not result["accepted"]:
+            return {"name":"", "value":""}
+        else:
+            state_id = result["curr_state"]
+            name = self.automaton.states[state_id].get_name()
+            name = name.replace("{", "")
+            name = name.replace("}", "")
+            return {"name": name, "value": lexem}
+        
+    def __add_token(self, token):
+        token_name = token["name"]
+        token_value = token["value"]
+
+        if token_name not in self.tokens:
+            self.tokens[token_name] = [token_value]
+        else:
+            self.tokens[token_name].append(token_value)
