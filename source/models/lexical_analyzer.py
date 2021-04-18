@@ -63,27 +63,49 @@ class LexicalAnalyzer:
                 self.__add_token(token)
     
     def next_token(self, lexemes):
-        # Os lexemas sao lidos do ultimo ao primeiro
         lexem = lexemes.pop()
         
         step = 0
         state_id = self.automaton.initial_id
         result = {}
 
+        last_accepted_step = 0
+        last_accepted_id = -1
+
         # Alimenta o automato com a palavra e retorna o resultado
-        # TODO substituir por fast run? Vale a pena chamar o determinize() toda vez?
         while (len(lexem) >= step):
             result = self.automaton.step_forward(state_id,step,lexem)
-            if not result["processing"]:
-               break
 
+            # Guardamos o ultimo estado aceito e o passo
+            if state_id in self.automaton.final_ids:
+                last_accepted_step = step
+                last_accepted_id = state_id
+
+            if not result["processing"]:
+                break
+           
             step += 1
             state_id = result["next_states"][0]
         
-        # Palavras nao aceitas retornam um token com valores vazios
-        if not result["accepted"]:
-            return {"name":"", "value":""}
+        # Em algum momento tivemos um token formado
+        if not result["accepted"] and last_accepted_step > 0:
+            # Separamos a sub-string aceita do resto
+            accepted = lexem[:last_accepted_step]
+            remaining = lexem[last_accepted_step:]
+
+            # O que sobrou precisa ser reavaliado
+            lexemes.append(remaining)
+            
+            name = self.automaton.states[last_accepted_id].get_name()
+            name = name.replace("{", "")
+            name = name.replace("}", "")
+            return {"name": name, "value": accepted}
+        # Nenhum token foi formado
         else:
+            return {"name": "", "value": ""}
+        
+        # Finalizamos com um token
+        if result["accepted"]:
             state_id = result["curr_state"]
             name = self.automaton.states[state_id].get_name()
             name = name.replace("{", "")
