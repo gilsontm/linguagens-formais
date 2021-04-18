@@ -17,7 +17,13 @@ class LexicalHandler:
         analyzer.to_file(path)
         return send_file(path, mimetype="text/plain")
 
-    @blueprint.route("/analyze", methods=["POST"])
+    @blueprint.route("/run-analysis", methods=["POST"])
     def analyze():
-        # TODO: ler pseudocódigo e identificar lexemas
-        pass
+        path = get_file_path("analyzer_upload.txt")
+        file = request.files["file"]
+        file.save(path)
+        analyzer = LexicalAnalyzer.from_file(path)
+        if not analyzer.valid():
+            raise InvalidUsage(message.INVALID_AUTOMATA)
+        tokens = analyzer.run_analysis(request.form["code"])
+        return {"tokens" : tokens}

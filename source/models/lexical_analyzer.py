@@ -8,7 +8,7 @@ class LexicalAnalyzer:
     def __init__(self):
         self.automaton = None
         self.lexemes = None
-        self.tokens = {}
+        self.tokens = []
 
     @staticmethod
     def from_file(file_path):
@@ -54,17 +54,24 @@ class LexicalAnalyzer:
         if self.automaton is None:
             return False
         return self.automaton.to_file(file_path)
-    
+
+    def valid(self):
+        if self.automaton is None:
+            return False
+        return self.automaton.valid()
+
     def run_analysis(self, code):
         lexemes = code.split()
+        lexemes.reverse()
         while lexemes:
             token = self.next_token(lexemes)
-            if token["name"]:
-                self.__add_token(token)
-    
+            if token is not None:
+                self.tokens.append(token)
+        return self.tokens
+
     def next_token(self, lexemes):
-        lexem = lexemes.pop()
-        
+        lexeme = lexemes.pop()
+
         step = 0
         state_id = self.automaton.initial_id
         result = {}
@@ -73,8 +80,8 @@ class LexicalAnalyzer:
         last_accepted_id = -1
 
         # Alimenta o automato com a palavra e retorna o resultado
-        while (len(lexem) >= step):
-            result = self.automaton.step_forward(state_id,step,lexem)
+        while (len(lexeme) >= step):
+            result = self.automaton.step_forward(state_id, step, lexeme)
 
             # Guardamos o ultimo estado aceito e o passo
             if state_id in self.automaton.final_ids:
@@ -83,40 +90,35 @@ class LexicalAnalyzer:
 
             if not result["processing"]:
                 break
-           
+
             step += 1
             state_id = result["next_states"][0]
-        
+
         # Em algum momento tivemos um token formado
         if not result["accepted"] and last_accepted_step > 0:
             # Separamos a sub-string aceita do resto
-            accepted = lexem[:last_accepted_step]
-            remaining = lexem[last_accepted_step:]
+            accepted = lexeme[:last_accepted_step]
+            remaining = lexeme[last_accepted_step:]
 
             # O que sobrou precisa ser reavaliado
             lexemes.append(remaining)
-            
             name = self.automaton.states[last_accepted_id].get_name()
-            name = name.replace("{", "")
-            name = name.replace("}", "")
-            return {"name": name, "value": accepted}
-        # Nenhum token foi formado
-        else:
-            return {"name": "", "value": ""}
-        
+            name = self.__format_state_name(name)
+            return {"token" : name, "lexeme" : accepted}
+
         # Finalizamos com um token
         if result["accepted"]:
             state_id = result["curr_state"]
             name = self.automaton.states[state_id].get_name()
-            name = name.replace("{", "")
-            name = name.replace("}", "")
-            return {"name": name, "value": lexem}
-        
-    def __add_token(self, token):
-        token_name = token["name"]
-        token_value = token["value"]
+            name = self.__format_state_name(name)
+            return {"token" : name, "lexeme" : lexeme}
 
-        if token_name not in self.tokens:
-            self.tokens[token_name] = [token_value]
-        else:
-            self.tokens[token_name].append(token_value)
+        # Nenhum token foi formado
+        return None
+
+    def __format_state_name(self, name):
+        name = name.replace("{", "")
+        name = name.replace("}", "")
+        name = name.replace(">", "")
+        name = name.replace("<", "")
+        return name
