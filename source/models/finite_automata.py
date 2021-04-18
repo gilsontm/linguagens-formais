@@ -192,7 +192,7 @@ class FiniteAutomata:
 
         if (len(word) == step):
             if (curr_state_id in self.final_ids):
-                return {"processing":False, "accepted": True}
+                return {"processing":False, "accepted": True, "curr_state": curr_state_id}
             return {"processing":False, "accepted": False, "reason": "rejected"}
 
         state = self.states[curr_state_id]
