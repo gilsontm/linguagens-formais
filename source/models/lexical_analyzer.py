@@ -55,24 +55,23 @@ class LexicalAnalyzer:
             return False
         return self.automaton.to_file(file_path)
     
-    def run_analysis(self):
-        while self.lexemes:
-            token = self.request_token()
+    def run_analysis(self, code):
+        lexemes = code.split()
+        while lexemes:
+            token = self.next_token(lexemes)
             if token["name"]:
                 self.__add_token(token)
     
-    def load_source_code(self, code):
-        self.lexemes = code.split()
-        
-    def request_token(self):
+    def next_token(self, lexemes):
         # Os lexemas sao lidos do ultimo ao primeiro
-        lexem = self.lexemes.pop()
+        lexem = lexemes.pop()
         
         step = 0
         state_id = self.automaton.initial_id
         result = {}
 
         # Alimenta o automato com a palavra e retorna o resultado
+        # TODO substituir por fast run? Vale a pena chamar o determinize() toda vez?
         while (len(lexem) >= step):
             result = self.automaton.step_forward(state_id,step,lexem)
             if not result["processing"]:
