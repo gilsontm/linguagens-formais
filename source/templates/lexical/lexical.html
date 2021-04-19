@@ -1,0 +1,100 @@
+{% from 'lexical/creation.html' import creation %}
+{% from 'lexical/analysis.html' import analysis %}
+
+
+{% macro lexical(prefix_id='') %}
+    <div class="container">
+        <h2 class="text-center mt-5"> Análise Léxica </h2>
+
+        <nav>
+            <div class="nav nav-tabs" role="tablist">
+                <button type="button" class="btn nav-item nav-link active" role="tab" data-toggle="tab" href="#lexical-creation-content"> Criação </button>
+                <button type="button" class="btn nav-item nav-link" role="tab" data-toggle="tab" href="#lexical-analysis-content"> Análise </button>
+            </div>
+        </nav>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="lexical-creation-content" role="tabpanel">
+                {{ creation(prefix_id=prefix_id) }}
+            </div>
+            <div class="tab-pane fade" id="lexical-analysis-content" role="tabpanel">
+                {{ analysis(prefix_id=prefix_id) }}
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        const INPUT_LEXEME_REGEX = "#{{prefix_id}}-lexical-expressions";
+        const INPUT_PRIMITIVES_REGEX = "#{{prefix_id}}-lexical-dependencies";
+        const VALIDATION_LEXEME_REGEX = "#{{prefix_id}}-validation-lexical-expressions";
+        const VALIDATION_PRIMITIVES_REGEX = "#{{prefix_id}}-validation-lexical-dependencies";
+        const BUILD_LEXICAL_ANALYSER_BTN = "#{{prefix_id}}-create-analyzer";
+
+        $(BUILD_LEXICAL_ANALYSER_BTN).click(build_lexical_analyser);
+
+        $(INPUT_PRIMITIVES_REGEX).keyup(() => {
+            let text = $(INPUT_PRIMITIVES_REGEX).val();
+            if (validate(text, true))
+                $(VALIDATION_PRIMITIVES_REGEX).addClass("d-none");
+            else
+                $(VALIDATION_PRIMITIVES_REGEX).removeClass("d-none");
+        });
+
+        $(INPUT_LEXEME_REGEX).keyup(() => {
+            let text = $(INPUT_LEXEME_REGEX).val();
+            if (validate(text))
+                $(VALIDATION_LEXEME_REGEX).addClass("d-none");
+            else
+                $(VALIDATION_LEXEME_REGEX).removeClass("d-none");
+        });
+
+        function build_lexical_analyser() {
+            let primitives = $(INPUT_PRIMITIVES_REGEX).val();
+            let valid = true;
+            if (!validate(primitives, true)) {
+                show_error(null, "Expressão inválida nas dependências.");
+                valid = false;
+            }
+
+            let lexeme_expresssion = $(INPUT_LEXEME_REGEX).val();
+            if (!validate(lexeme_expresssion)) {
+                show_error(null, "Expressão inválida nas classes léxicas.");
+                valid = false;
+            }
+
+            if (valid) {
+                let json = format_lexical_regex_json(primitives, lexeme_expresssion);
+                $.ajax({
+                    type: "POST",
+                    url: "/lexical/create-analyzer",
+                    data: JSON.stringify(json),
+                    contentType: "application/json",
+                    success: res => download(res, "analyzer.txt"),
+                    error: res => show_error(res),
+                });
+            }
+        }
+
+        function format_lexical_regex_json(primitives, lexemes) {
+            let json = {}
+            format_lexical_regex_json_entry(primitives, json, "dependencies");
+            format_lexical_regex_json_entry(lexemes, json, "expressions");
+            return json
+        }
+
+        function format_lexical_regex_json_entry(text, json, key) {
+            json[key] = []
+            let elements;
+            let parsed = text;
+            parsed = parsed.replace(/ /g, "");
+            let lines = parsed.split("\n");
+            lines = lines.filter(e => e);
+            for (line of lines) {
+                line = line.slice(0, -1); // removes ";" from end of line
+                elements = line.split("<-");
+                json[key].push({[elements[0]] : elements[1]});
+            }
+            return json;
+        }
+    </script>
+{% endmacro %}

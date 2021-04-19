@@ -14,12 +14,16 @@
         {% from 'docs/docs.html' import docs %}
         {% from 'regex/regex.html' import regex %}
         {% from 'grammar/grammar.html' import grammar %}
+        {% from 'lexical/lexical.html' import lexical %}
         {% from 'automata/automata.html' import automata %}
 
         {{ menu() }}
         <div class="row no-gutters">
             <div class="offset-2 col-10">
                 <div class="tab-content mt-5">
+                    <div role="tabpanel" id="content-4" class="tab-pane fade">
+                        {{ lexical(prefix_id="1") }}
+                    </div>
                     <div role="tabpanel" id="content-3" class="tab-pane fade">
                         {{ regex(prefix_id="1") }}
                     </div>
@@ -38,4 +42,18 @@
         <script type="text/javascript">
         </script>
     </body>
+
+    <script type="text/javascript">
+        $("textarea").on("keydown", event => {
+            if (event.keyCode == 9) { // tab
+                event.preventDefault();
+                let target = $(event.target);
+                let start = event.target.selectionStart;
+                let end = event.target.selectionEnd;
+                target.val(target.val().substring(0, start) + "    " + target.val().substring(end));
+                target.get(0).setSelectionRange(start+4, start+4);
+            }
+        });
+    </script>
+
 </html>

@@ -1,3 +1,4 @@
+import re
 import json
 import copy
 from models.state import State
@@ -84,42 +85,25 @@ class FiniteAutomata:
         First the json representation is built,
         then is the required format;
     """
-    def to_file(self, file_path):
-        if (not self.valid()):
-            print('*****NOT VALID*****')
+    def to_file(self, file_path, with_names=True):
+        if not self.valid():
             return False
 
-        transition_map = {}
-        symbol_set = set()
-
         with open(file_path, "w") as f:
-            f.write(str(len(self.states))+ '\n')
-            f.write(str(self.initial_id)+ '\n')
-            for final_id in self.final_ids:
-                f.write(str(final_id))
-                if final_id != self.final_ids[-1]:
-                    f.write(',')
+            f.write(f"{len(self.states)}\n")
+            f.write(f"{self.initial_id}\n")
+            f.write(f"{','.join([str(final_id) for final_id in self.final_ids])}\n")
+            alphabet = self.alphabet()
+            f.write(f"{','.join(alphabet)}\n")
 
-            f.write('\n')
+            for from_id, from_state in self.states.items():
+                for symbol in from_state.transition:
+                    to_ids = [str(to_state.id) for to_state in from_state.transition[symbol]]
+                    f.write(f"{from_id},{symbol},{'-'.join(to_ids)}\n")
 
-            self.to_json()
-            for transition in self.json_automata['transitions']:
-                for symbol in transition['values']:
-                    symbol_set.add(symbol)
-                    key = str(transition['from'])+","+symbol
-                    if not(key in transition_map):
-                        transition_map[key] = ""
-                    transition_map[key] += str(transition['to'])+"-"
-
-            symbol_set_string = ""
-            for value in symbol_set:
-                symbol_set_string+= value+","
-
-            if symbol_set_string != "":
-                f.write(symbol_set_string[:-1]+'\n')
-
-            for key, value in transition_map.items():
-                f.write(key+","+value[:-1]+'\n')
+            if with_names:
+                for state_id, state in self.states.items():
+                    f.write(f"{state_id}:{state.name}\n")
         return True
 
     """
@@ -132,21 +116,32 @@ class FiniteAutomata:
 
             self.initial_id = int(lines[1])
 
-            for final_state in lines[2].split(','):
-                if(final_state != '\n'):
+            for final_state in lines[2].split(","):
+                if final_state != "\n":
                     self.final_ids.append(int(final_state))
 
-            for i in range(4,len(lines)):
-                transition = lines[i].split(',')
-                from_state = int(transition[0])
+            # matches [number]:[name]
+            naming_regex = re.compile(r"(\d+):(.+)")
+            # matches [number],[one character],[name]
+            transition_regex = re.compile(r"(\d+),(.{1}),(\d+[\-\d+]*)")
+
+            for line in lines[4:]:
+                naming = naming_regex.match(line)
+                if naming:
+                    state_id, name = naming.groups()
+                    self.states[int(state_id)].name = name.replace("\n", "")
+                    continue
+                from_state, symbol, to_states = transition_regex.match(line).groups()
+                from_state = int(from_state)
+                to_states = to_states.split("-")
+
                 if not (from_state in self.states):
-                    self.states[from_state] = State(from_state, 'q'+str(from_state))
-                symbol = transition[1]
-                to_states = transition[2].split('-')
+                    self.states[from_state] = State(from_state, "q"+str(from_state))
+
                 for to_state in to_states:
                     to_state = int(to_state)
                     if not (to_state in self.states):
-                        self.states[to_state] = State(to_state, 'q'+str(to_state))
+                        self.states[to_state] = State(to_state, "q"+str(to_state))
                     self.states[from_state].add_transition(symbol, self.states[to_state])
 
     """
@@ -166,7 +161,12 @@ class FiniteAutomata:
         self.json_automata['transitions'] = []
 
         for from_id, from_state in self.states.items():
-            self.json_automata['states'].append({"id": from_state.id, "name": from_state.name, "final": (from_state.id in self.final_ids), "initial": (from_state.id == self.initial_id)})
+            self.json_automata['states'].append({
+                "id": from_state.id,
+                "name": from_state.name,
+                "final": (from_state.id in self.final_ids),
+                "initial": (from_state.id == self.initial_id)
+            })
 
             for symbol, to_states in from_state.transition.items():
                 for to_id in to_states:
@@ -178,7 +178,11 @@ class FiniteAutomata:
 
         for from_id, to_state_n_values in transition_map.items():
             for to_state, values in to_state_n_values.items():
-                self.json_automata['transitions'].append({"from": from_id, "to": to_state.id, "values": values})
+                self.json_automata['transitions'].append({
+                    "from": from_id,
+                    "to": to_state.id,
+                    "values": values
+                })
         return self.json_automata
 
     """
@@ -196,7 +200,7 @@ class FiniteAutomata:
 
         if (len(word) == step):
             if (curr_state_id in self.final_ids):
-                return {"processing":False, "accepted": True}
+                return {"processing":False, "accepted": True, "curr_state": curr_state_id}
             return {"processing":False, "accepted": False, "reason": "rejected"}
 
         state = self.states[curr_state_id]
@@ -337,51 +341,26 @@ class FiniteAutomata:
             if not (FiniteAutomata.to_closure_string(state_list) in new_states):
                 FiniteAutomata.determinization_recursion(automaton, state_list, epsilon_closure, new_states)
 
-    """
-        returns the unification of two given automata
-    """
-    def unify(automaton_1_in, automaton_2_in):
-        automaton_1 = copy.deepcopy(automaton_1_in)
-        automaton_2 = copy.deepcopy(automaton_2_in)
-
+    """ returns the union between two or more automata """
+    def unify(*automata_in, rename=True):
+        automata = [copy.deepcopy(automaton) for automaton in automata_in]
         new_automaton = FiniteAutomata()
 
-        new_states = {}
-        new_final_states = []
-
-
-        new_automaton.states = new_states
-        new_automaton.final_ids = new_final_states
         new_automaton.initial_id = 0
+        initial_state = State(0, "q0")
+        new_automaton.states[0] = initial_state
 
-        """
-            adds a new initial state
-            wich epsilon transit to the initial states
-            of the given automatum
-        """
-        inital_state = State(0,"q0")
-        inital_state.add_transition('&',automaton_1.states[automaton_1.initial_id])
-        inital_state.add_transition('&',automaton_2.states[automaton_2.initial_id])
-        new_states[0] = inital_state
-
-        #changes automaton_1 states ids
-        for state_id, state in automaton_1.states.items():
-            state.id = state_id+1
-            new_states[state_id+1] = state
-            if state_id in automaton_1.final_ids:
-                new_final_states.append(state_id+1)
-
-        #changes automaton_2 states ids
-        automata_2_state_count = len(automaton_1.states);
-        for state_id, state in automaton_2.states.items():
-            automata_2_state_count += 1
-            state.id = automata_2_state_count
-            new_states[automata_2_state_count] = state
-            if state_id in automaton_2.final_ids:
-                new_final_states.append(automata_2_state_count)
-
-        new_automaton.rename_states()
-
+        state_count = 0
+        for automaton in automata:
+            initial_state.add_transition("&", automaton.states[automaton.initial_id])
+            for state_id, state in automaton.states.items():
+                state_count += 1
+                state.id = state_count
+                new_automaton.states[state_count] = state
+                if state_id in automaton.final_ids:
+                    new_automaton.final_ids.append(state_count)
+        if rename:
+            new_automaton.rename_states()
         return new_automaton
 
     """

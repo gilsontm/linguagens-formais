@@ -1,0 +1,94 @@
+{% macro analysis(prefix_id='') %}
+    <div>
+        <div class="row my-3">
+            <div class="col-3">
+                <button id="{{prefix_id}}-run-analysis" class="btn mr-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-spellcheck" viewBox="0 0 20 20">
+                        <path d="M8.217 11.068c1.216 0 1.948-.869 1.948-2.31v-.702c0-1.44-.727-2.305-1.929-2.305-.742 0-1.328.347-1.499.889h-.063V3.983h-1.29V11h1.27v-.791h.064c.21.532.776.86 1.499.86zm-.43-1.025c-.66 0-1.113-.518-1.113-1.28V8.12c0-.825.42-1.343 1.098-1.343.684 0 1.075.518 1.075 1.416v.45c0 .888-.386 1.401-1.06 1.401zm-5.583 1.035c.767 0 1.201-.356 1.406-.737h.059V11h1.216V7.519c0-1.314-.947-1.783-2.11-1.783C1.355 5.736.75 6.42.69 7.27h1.216c.064-.323.313-.552.84-.552.527 0 .864.249.864.771v.464H2.346C1.145 7.953.5 8.568.5 9.496c0 .977.693 1.582 1.704 1.582zm.42-.947c-.44 0-.845-.235-.845-.718 0-.395.269-.684.84-.684h.991v.538c0 .503-.444.864-.986.864zm8.897.567c-.577-.4-.9-1.088-.9-1.983v-.65c0-1.42.894-2.338 2.305-2.338 1.352 0 2.119.82 2.139 1.806h-1.187c-.04-.351-.283-.776-.918-.776-.674 0-1.045.517-1.045 1.328v.625c0 .468.121.834.343 1.067l-.737.92z"/>
+                        <path d="M14.469 9.414a.75.75 0 0 1 .117 1.055l-4 5a.75.75 0 0 1-1.116.061l-2.5-2.5a.75.75 0 1 1 1.06-1.06l1.908 1.907 3.476-4.346a.75.75 0 0 1 1.055-.117z"/>
+                    </svg>
+                    Executar análise léxica
+                </button>
+            </div>
+            <div class="col">
+                <div class="custom-file">
+                    <input id="{{prefix_id}}-lexical-analyzer-file" type="file" class="custom-file-input">
+                    <label class="custom-file-label" for="{{prefix_id}}-lexical-analyzer-file"> Escolha o analisador léxico... </label>
+                </div>
+            </div>
+        </div>
+        <div class="row my-3">
+            <div class="col">
+                <h5 class="text-center"> Pseudocódigo </h5>
+                <textarea id="{{prefix_id}}-lexical-pseudocode" class="bg-light border w-100 h-50vh p-3" style="resize: none;"></textarea>
+            </div>
+            <div class="col">
+                <h5 class="text-center"> Classes léxicas </h5>
+                <div class="h-50vh text-center scrollable">
+                    <div class="row no-gutters bg-light fixed-header">
+                        <div class="col border p-2"> <b>Lexemas</b> </div>
+                        <div class="col border p-2"> <b>Tokens encontrados</b> </div>
+                    </div>
+                    <div id="{{prefix_id}}-lexical-table">
+                        <div class="w-100 border">
+                            <p class="p-2 m-0"> Nenhum resultado. </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+
+        const LEXICAL_TABLE = "#{{prefix_id}}-lexical-table";
+        const RUN_ANALYSIS_BTN = "#{{prefix_id}}-run-analysis";
+        const LEXICAL_PSEUDOCODE = "#{{prefix_id}}-lexical-pseudocode";
+        const LEXICAL_ANALYZER_FILE = "#{{prefix_id}}-lexical-analyzer-file";
+
+        const EMPTY_TABLE_TEMPLATE = `
+            <div class="w-100 border">
+                <p class="p-3 m-0"> Nenhum resultado. </p>
+            </div>
+        `;
+
+        $(LEXICAL_ANALYZER_FILE).change(event => {
+            $(LEXICAL_ANALYZER_FILE).next().html($(LEXICAL_ANALYZER_FILE).prop("files")[0].name);
+        });
+
+        $(RUN_ANALYSIS_BTN).click(run_lexical_analysis);
+
+        function run_lexical_analysis() {
+            let form = new FormData();
+            form.append("file", $(LEXICAL_ANALYZER_FILE).prop("files")[0]);
+            form.append("code", $(LEXICAL_PSEUDOCODE).val());
+            $.ajax({
+                type: "POST",
+                url: "/lexical/run-analysis",
+                data: form,
+                success: res => populate_lexical_table(res),
+                error: res => show_error(res),
+                contentType: false,
+                processData: false,
+            });
+        }
+
+        function populate_lexical_table(res) {
+            let table = $(LEXICAL_TABLE);
+            table.html("");
+            if (!res || !res.tokens || !res.tokens.length) {
+                table.append(EMPTY_TABLE_TEMPLATE);
+            } else {
+                for (match of res.tokens) {
+                    table.append(`
+                        <div class="row no-gutters">
+                            <div class="col p-2 border"> ${match.lexeme} </div>
+                            <div class="col p-2 border"> ${match.token} </div>
+                        </div>
+                    `);
+                }
+            }
+        }
+    </script>
+
+{% endmacro %}

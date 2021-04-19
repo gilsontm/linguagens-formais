@@ -53,6 +53,8 @@ class AutomataHandler:
 
     @blueprint.route("/unify", methods=["POST"])
     def unify_automata():
+        print(g.automata1.to_json());
+        print(g.automata1.to_json());
         automata = FiniteAutomata.unify(g.automata1, g.automata2)
         return automata.to_json()
 
