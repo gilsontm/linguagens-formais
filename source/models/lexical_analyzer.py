@@ -47,6 +47,19 @@ class LexicalAnalyzer:
                 state.name = "q"
         # Determiniza o autômato resultante da união
         automaton = FiniteAutomata.determinize(automaton)
+
+        # Renomeia os estados
+        #    - estados de aceitação recebem o nome da primeira classe que representam (maior prioridade)
+        #    - estados de não aceitação recebem o nome "q"
+        for state_id, state in automaton.states.items():
+            name = "q"
+            if state_id in automaton.final_ids:
+                tokens = analyser.__format_state_name(state.name).split(",")
+                for token in tokens:
+                    if token != "q":
+                        name = token
+                        break
+            state.name = name
         analyser.automaton = automaton
         return analyser
 
