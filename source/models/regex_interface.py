@@ -22,6 +22,15 @@ class RegularExpressionInterface():
 			return 1
 		return -1
 
+	"""
+		Resolve o valor de caracteres especiais.
+		Por exemplo, "\\s", não deve resultar no caractere 's', mas, em um espaço.
+	"""
+	def __resolve_char(self, ch):
+		if ch == 's':
+			return ' '
+		return ch
+
 	# Função adiciona operadores de concatenação, definidas por caracteres não espaçados na expressão
 	def __insert_concatenation_operator(self, txt):
 		opcnt = 0
@@ -32,14 +41,16 @@ class RegularExpressionInterface():
 		while i < length:
 			ch = txt[i]
 			i += 1
-			if re.is_operand(ch) or ch == '\\':
+			if re.is_operand(ch) or ch == '\\' or ch == '#':
+				opcnt += 1
 				if ch == '\\':
 					ch += txt[i]
 					i += 1
 				chrs = []
-				while i < length and (re.is_operand(txt[i]) or txt[i] == '\\'):
+				while i < length and (re.is_operand(txt[i]) or txt[i] == '\\' or ch == '#'):
 					chrs.append(ch)
 					ch = txt[i]
+					opcnt += 1
 					i += 1
 					if ch == '\\':
 						ch += txt[i]
@@ -186,7 +197,8 @@ class RegularExpressionInterface():
 			if ch == ',':
 				ch = '.'
 			if ch.startswith('\\'):
-				stack.append(TreeNode(symbol=ch[1], tree=tree, type_= Tree.OPERAND,id_=opcnt))
+				ch = self.__resolve_char(ch[1])
+				stack.append(TreeNode(symbol=ch, tree=tree, type_= Tree.OPERAND,id_=opcnt))
 				opcnt -= 1
 			elif re.is_operand(ch):
 				stack.append(TreeNode(symbol=ch, tree=tree, type_= Tree.OPERAND, id_=opcnt))
@@ -274,9 +286,10 @@ class RegularExpressionInterface():
 		return dfa
 
 	def build_dfa(self, exp):
-		exp = '(' + exp + ') . #'
-		exp, opcnt = self.__insert_concatenation_operator(exp)
+		exp = '(' + exp + ').#'
+		# "__resolve_extension_brackets" deve ser resolvido antes de "__insert_extension_operator"
 		exp, opcnt = self.__resolve_extension_brackets(exp)
+		exp, opcnt = self.__insert_concatenation_operator(exp)
 		postfix = self.__infix_to_postfix(exp)
 		tree = self.__postfix_to_syntax_tree(postfix, opcnt)
 		dfa = self.__create_dfa(tree)

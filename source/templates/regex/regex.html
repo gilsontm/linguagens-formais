@@ -81,6 +81,7 @@
             parsed = parsed.replace(/[a-zA-Z0-9]/g, "a");
 
             // caracteres especiais
+            parsed = parsed.replace(/(\\a)/g, "a");
             parsed = parsed.replace(/(\\\()/g, "a");
             parsed = parsed.replace(/(\\\))/g, "a");
             parsed = parsed.replace(/(\\\])/g, "a");

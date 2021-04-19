@@ -74,16 +74,17 @@ class LexicalAnalyzer:
         return self.automaton.valid()
 
     def run_analysis(self, code):
-        lexemes = code.split()
-        lexemes.reverse()
-        while lexemes:
-            token = self.next_token(lexemes)
+        lexemes = code
+        while len(lexemes) > 0:
+            if lexemes[0] == ' ' or lexemes[0] == '\n':
+                lexemes = lexemes[1::]
+            token, lexemes = self.next_token(lexemes)
             if token is not None:
                 self.tokens.append(token)
         return self.tokens
 
     def next_token(self, lexemes):
-        lexeme = lexemes.pop()
+        lexeme = lexemes
 
         step = 0
         state_id = self.automaton.initial_id
@@ -113,21 +114,21 @@ class LexicalAnalyzer:
             accepted = lexeme[:last_accepted_step]
             remaining = lexeme[last_accepted_step:]
 
-            # O que sobrou precisa ser reavaliado
-            lexemes.append(remaining)
             name = self.automaton.states[last_accepted_id].get_name()
             name = self.__format_state_name(name)
-            return {"token" : name, "lexeme" : accepted}
+            # O que sobrou precisa ser reavaliado
+            return {"token" : name, "lexeme" : accepted}, remaining
 
         # Finalizamos com um token
         if result["accepted"]:
             state_id = result["curr_state"]
             name = self.automaton.states[state_id].get_name()
             name = self.__format_state_name(name)
-            return {"token" : name, "lexeme" : lexeme}
+            return {"token" : name, "lexeme" : lexeme}, ""
 
         # Nenhum token foi formado
-        return None
+        cut = min(lexeme.find(' '), lexeme.find('\n'))
+        return None, lexeme[cut::]
 
     def __format_state_name(self, name):
         name = name.replace("{", "")
