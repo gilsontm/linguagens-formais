@@ -69,10 +69,10 @@
             let elements;
             let parsed = text;
             parsed = parsed.replace(/ /g, "");
-            parsed = parsed.replace(/\n/g, "");
-            let lines = parsed.split(";");
+            let lines = parsed.split("\n");
             lines = lines.filter(e => e);
             for (line of lines) {
+                line = line.slice(0, -1); // removes ";" from end of line
                 elements = line.split("<-");
                 json[key].push({[elements[0]] : elements[1]});
             }

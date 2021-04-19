@@ -74,10 +74,11 @@
 
         function validate(text) {
             let parsed = text;
+
             parsed = parsed.replace(/ /g, "");
             parsed = parsed.replace(/(<-)/g, "=");
-            parsed = parsed.replace(/<[a-z, A-Z]*>/g, "<>");
-            parsed = parsed.replace(/[a-z, A-Z, 0-9]/g, "a");
+            parsed = parsed.replace(/<[a-zA-Z]*>/g, "<>");
+            parsed = parsed.replace(/[a-zA-Z0-9]/g, "a");
 
             // caracteres especiais
             parsed = parsed.replace(/(\\\()/g, "a");
@@ -91,14 +92,19 @@
             parsed = parsed.replace(/(\\\+)/g, "a");
             parsed = parsed.replace(/(\\\*)/g, "a");
             parsed = parsed.replace(/(\\\/)/g, "a");
+            parsed = parsed.replace(/(\\\-)/g, "a");
             parsed = parsed.replace(/(\\%)/g, "a");
             parsed = parsed.replace(/(\\!)/g, "a");
+            parsed = parsed.replace(/(\\\?)/g, "a");
             parsed = parsed.replace(/(\\=)/g, "a");
             parsed = parsed.replace(/(\\&)/g, "a");
             parsed = parsed.replace(/(\\\|)/g, "a");
             parsed = parsed.replace(/(\\\^)/g, "a");
             parsed = parsed.replace(/(\\;)/g, "a");
             parsed = parsed.replace(/(\\,)/g, "a");
+            parsed = parsed.replace(/(\\\")/g, "a");
+            parsed = parsed.replace(/(\\\')/g, "a");
+            parsed = parsed.replace(/(\\\.)/g, "a");
 
             parsed = parsed.replace(/a+/g, "a");
             parsed = parsed.replace(/(\+|\.)/g, "+");

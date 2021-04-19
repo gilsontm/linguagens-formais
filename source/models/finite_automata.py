@@ -1,3 +1,4 @@
+import re
 import json
 import copy
 from models.state import State
@@ -115,25 +116,32 @@ class FiniteAutomata:
 
             self.initial_id = int(lines[1])
 
-            for final_state in lines[2].split(','):
-                if(final_state != '\n'):
+            for final_state in lines[2].split(","):
+                if final_state != "\n":
                     self.final_ids.append(int(final_state))
 
-            for i in range(4,len(lines)):
-                if ":" in lines[i]:
-                    state_id, name = lines[i].split(":")
+            # matches [number]:[name]
+            naming_regex = re.compile(r"(\d+):(.+)")
+            # matches [number],[one character],[name]
+            transition_regex = re.compile(r"(\d+),(.{1}),(\d+[\-\d+]*)")
+
+            for line in lines[4:]:
+                naming = naming_regex.match(line)
+                if naming:
+                    state_id, name = naming.groups()
                     self.states[int(state_id)].name = name.replace("\n", "")
                     continue
-                transition = lines[i].split(',')
-                from_state = int(transition[0])
+                from_state, symbol, to_states = transition_regex.match(line).groups()
+                from_state = int(from_state)
+                to_states = to_states.split("-")
+
                 if not (from_state in self.states):
-                    self.states[from_state] = State(from_state, 'q'+str(from_state))
-                symbol = transition[1]
-                to_states = transition[2].split('-')
+                    self.states[from_state] = State(from_state, "q"+str(from_state))
+
                 for to_state in to_states:
                     to_state = int(to_state)
                     if not (to_state in self.states):
-                        self.states[to_state] = State(to_state, 'q'+str(to_state))
+                        self.states[to_state] = State(to_state, "q"+str(to_state))
                     self.states[from_state].add_transition(symbol, self.states[to_state])
 
     """
