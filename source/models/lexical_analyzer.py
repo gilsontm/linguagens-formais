@@ -127,7 +127,12 @@ class LexicalAnalyzer:
             return {"token" : name, "lexeme" : lexeme}, ""
 
         # Nenhum token foi formado
-        cut = min(lexeme.find(' '), lexeme.find('\n'))
+        cut_space = lexeme.find(' ')
+        cut_break = lexeme.find('\n')
+        if cut_space == -1 or cut_break == -1:
+            cut = max(cut_space, cut_break)
+        else:
+            cut = min(cut_space, cut_break)
         return None, lexeme[cut::]
 
     def __format_state_name(self, name):
