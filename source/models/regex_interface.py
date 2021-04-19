@@ -97,6 +97,9 @@ class RegularExpressionInterface():
 				if len(bracket) != 0:
 					new_exp += '(' + ' + '.join(bracket) + ')'
 			else:
+				if ch == '\\':
+					ch += exp[i]
+					i += 1
 				new_exp += ch
 		return new_exp, op_cnt
 
@@ -147,6 +150,9 @@ class RegularExpressionInterface():
 			elif ch == ')':
 				while stack and stack[-1] != '(':
 					c = stack.pop()
+					if c == '?':
+						symbols.append('&')
+						c = '+'
 					symbols.append(c)
 				# Sempre será '(' se a expressão estiver correta
 				if stack[-1] == '(':
@@ -155,14 +161,17 @@ class RegularExpressionInterface():
 				# É um operador
 				while stack and self.__prec(ch) <= self.__prec(stack[-1]):
 					c = stack.pop()
+					if c == '?':
+						symbols.append('&')
+						c = '+'
 					symbols.append(c)
-				if ch == '?':
-					symbols.append('&')
-					ch = '+'
 				stack.append(ch)
 
 		while stack:
 			c = stack.pop()
+			if c == '?':
+				symbols.append('&')
+				c = '+'
 			symbols.append(c)
 		return symbols
 
