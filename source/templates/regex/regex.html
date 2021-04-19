@@ -72,7 +72,7 @@
             return parsed;
         }
 
-        function validate(text) {
+        function validate(text, allow_empty) {
             let parsed = text;
 
             parsed = parsed.replace(/ /g, "");
@@ -112,7 +112,7 @@
             parsed = parsed.replace(/<>/g, 'a');
             let lines = parsed.split("\n");
             lines = lines.filter(e => e);
-            if (lines.length == 0)
+            if (!allow_empty && lines.length == 0)
                 return false;
             for (i in lines) {
                 if (lines[i].length < 4)
