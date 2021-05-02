@@ -56,7 +56,7 @@
 
         $(CONVERT_TO_GRAMMAR_BTN).click(() => {
             let data = get_single_data();
-            post_export("/automata/to-grammar", JSON.stringify(data), "automata-to-grammar.txt");
+            post_export("/automata/to-grammar", JSON.stringify(data), "grammar.txt");
         });
 
         function operate(operation, data, extra) {

@@ -108,7 +108,6 @@ class Grammar:
         for k, v in self.dictionary.items():
             if not v:
                 return False
-
         return True
 
     """
@@ -119,17 +118,20 @@ class Grammar:
             for derivation in v:
                 if len(k) != 1:
                     return False
-
                 if not k.isupper():
                     return False
-
                 if len(derivation) > 2:
                     return False
-
                 if derivation[0].isupper():
                     return False
-
                 if len(derivation) == 2 and derivation[1].islower():
                     return False
-
         return True
+
+    def remove_left_recursion(self):
+        # TODO: implementar remoção de recursão à esquerda
+        pass
+
+    def factor(self):
+        # TODO: implementar fatoração
+        pass
