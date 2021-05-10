@@ -6,3 +6,5 @@ INVALID_FIRST_OPERAND = "Operando 1 inválido."
 INVALID_SECOND_OPERAND = "Operando 2 inválido."
 
 GRAMMAR_NOT_REGULAR = "Gramática não regular."
+
+GRAMMAR_CONFLICT = "Houve conflito. A gramática não é LL(1)."

@@ -3,6 +3,7 @@ from flask import *
 from utils import messages
 from utils.path import get_file_path
 from exceptions.invalid_usage import InvalidUsage
+from models.syntax_analyzer import SyntaxAnalyzer
 
 
 blueprint = Blueprint("syntax", __name__)
@@ -14,6 +15,17 @@ class SyntaxHandler:
         path = get_file_path("grammar_upload.txt")
         file = request.files["file"]
         file.save(path)
-        # TODO: implementar criação de analisador
-        # TODO: implementar reconhecimento de sentença
-        # valor = request.form["chave"]
+        sentence = request.form["sentence"]
+        # Criação de analisador
+        analyzer = SyntaxAnalyzer.from_file(path)
+        # Reconhecimento de sentença
+        stacktrace, accepted = analyzer.run_analysis(sentence)
+        result = {
+            "stacktrace": stacktrace,
+            "accepted": accepted,
+            "variables": list(analyzer.grammar.get_variables()),
+            "terminals": list(analyzer.grammar.get_terminals()) + ["$"],
+            "table": analyzer.table,
+        }
+        return result
+
