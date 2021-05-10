@@ -55,11 +55,11 @@ class Grammar:
         variables = set()
 
         for key in self.dictionary:
-            keys = set(filter(lambda k: k.isupper(), key))
+            keys = set(filter(lambda k: self.__is_variable(k), key))
             variables = variables.union(keys)
 
             for string in self.dictionary[key]:
-                values = set(filter(lambda v: v.isupper(), string))
+                values = set(filter(lambda v: self.__is_variable(v), string))
                 variables = variables.union(values)
 
         return list(variables)
@@ -71,17 +71,31 @@ class Grammar:
         terminals = set()
 
         for key in self.dictionary:
-            keys = set(filter(lambda k: not k.isupper(), key))
+            keys = set(filter(lambda k: self.__is_terminal(k), key))
             terminals = terminals.union(keys)
 
             for string in self.dictionary[key]:
-                values = set(filter(lambda v: not v.isupper(), string))
+                values = set(filter(lambda v: self.__is_terminal(v), string))
                 terminals = terminals.union(values)
 
         # Removes epsilon in case it exists
         terminals -= (set(["&"]))
 
         return list(terminals)
+
+    """
+    Returns whether a character is a variable.
+    """
+    def __is_variable(self, character):
+        return character.isupper()
+
+    """
+    Returns whether a character is terminal.
+    """
+    def __is_terminal(self, character):
+        if character == "&":
+            return False
+        return not character.isupper()
 
     """
     Given a production head, returns all its derivations
@@ -102,13 +116,26 @@ class Grammar:
         self.dictionary[key].append(value)
 
     """
-    Returns if a grammar is valid. An invalid grammar is one that
-    has a variable but no derivations.
+    Returns whether a grammar is valid.
+    An invalid grammar is one that:
+        - has a variable but no derivations.
+        - has a variable that does not appear in the head of any derivation.
     """
     def is_valid(self):
+        # Checks whether a key has no derivation.
         for k, v in self.dictionary.items():
             if not v:
                 return False
+
+        # Checks whether a variable appears in at least one derivation head.
+        variables = self.get_variables()
+        for variable in variables:
+            for key in self.dictionary:
+                if variable in key:
+                    break
+            else:
+                return False
+
         return True
 
     """
@@ -135,4 +162,16 @@ class Grammar:
 
     def factor(self):
         # TODO: implementar fatoração
+        pass
+
+    """
+    Returns the FIRST set of a sequence of characteres
+    """
+    def get_first(self, sequence):
+        pass
+
+    """
+    Returns the FOLLOW set of a sequence of characteres
+    """
+    def get_follow(self, sequence):
         pass
