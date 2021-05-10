@@ -1,3 +1,6 @@
+import copy
+
+
 class Grammar:
 
     def __init__(self):
@@ -118,13 +121,25 @@ class Grammar:
     """
     Returns whether a grammar is valid.
     An invalid grammar is one that:
-        - has a variable but no derivations.
+        - has a head with no derivations.
+        - has a derivation with no head.
         - has a variable that does not appear in the head of any derivation.
+        - has a head or derivation with the invalid symbol '$'.
+        - has a head made of just terminals with no variable.
     """
     def is_valid(self):
-        # Checks whether a key has no derivation.
-        for k, v in self.dictionary.items():
-            if not v:
+        # Checks whether grammar has the initial symbol.
+        if "S" not in self.dictionary:
+            return False
+
+        # Checks whether a key has no derivation or a derivation has no key.
+        for key, value in self.dictionary.items():
+            if not key or not value:
+                return False
+
+        # Checks whether a key or derivation has the invalid symbol '$'.
+        for key, value in self.dictionary.items():
+            if "$" in key or "$" in value:
                 return False
 
         # Checks whether a variable appears in at least one derivation head.
@@ -136,6 +151,13 @@ class Grammar:
             else:
                 return False
 
+        # Checks whether a head has only terminals and no variable.
+        for key in self.dictionary:
+            for symbol in key:
+                if self.__is_variable(symbol):
+                    break
+            else:
+                return False
         return True
 
     """
@@ -167,11 +189,84 @@ class Grammar:
     """
     Returns the FIRST set of a sequence of characteres
     """
-    def get_first(self, sequence):
-        pass
+    def get_first(self, sequence, first_table=None):
+        if first_table is None:
+            first_table = self.get_first_table()
+        first = set()
+        for char in sequence:
+            if char == "&":
+                continue
+            first = first.union(first_table[char] - set("&"))
+            if "&" not in first_table[char]:
+                break
+        else:
+            first.add("&")
+        return first
 
     """
-    Returns the FOLLOW set of a sequence of characteres
+    Returns a table of FIRSTS for all symbols.
     """
-    def get_follow(self, sequence):
-        pass
+    def get_first_table(self):
+        # Initialize table of FIRSTS
+        first_table = dict()
+        variables = self.get_variables()
+        terminals = self.get_terminals()
+        for variable in variables:
+            first_table[variable] = set()
+        for terminal in terminals:
+            first_table[terminal] = set(terminal)
+
+        # Iterate over the table of FIRSTS until no further changes can be made
+        previous = None
+        while previous != first_table:
+            previous = copy.deepcopy(first_table)
+            for variable in variables:
+                for string in self.dictionary[variable]:
+                    if string == "&":
+                        first_table[variable].add("&")
+                    for char in string:
+                        if char == "&":
+                            continue
+                        if self.__is_terminal(char):
+                            first_table[variable].add(char)
+                            break
+                        else:
+                            first_table[variable] = first_table[variable].union(first_table[char] - set("&"))
+                            if "&" not in first_table[char]:
+                                break
+                    else:
+                        first_table[variable].add("&")
+        return first_table
+
+    """
+    Returns a table of FOLLOWS for all variables (not all symbols).
+    """
+    def get_follow_table(self):
+        # Initialize table of FOLLOWS
+        follow_table = dict()
+        variables = self.get_variables()
+        for variable in variables:
+            if variable == "S":
+                follow_table[variable] = set("$")
+            else:
+                follow_table[variable] = set()
+
+        # Calculate the table of FIRSTS to speed up the algorithm
+        first_table = self.get_first_table()
+
+        # Iterate over the table of FIRSTS until no further changes can be made
+        previous = None
+        while previous != follow_table:
+            previous = copy.deepcopy(follow_table)
+            for variable in variables:
+                for string in self.dictionary[variable]:
+                    for i in range(len(string)):
+                        char = string[i]
+                        if self.__is_variable(char):
+                            beta = string[i+1:]
+                            first_beta = self.get_first(beta, first_table=first_table)
+                            if len(beta) > 0:
+                                follow_table[char] = follow_table[char].union(first_beta - set("&"))
+                            if len(beta) == 0 or "&" in first_beta:
+                                follow_table[char] = follow_table[char].union(follow_table[variable])
+        return follow_table
