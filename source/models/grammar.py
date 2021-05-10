@@ -52,35 +52,36 @@ class Grammar:
     Returns all variables in the grammar (upper case letters)
     """
     def get_variables(self):
-        variables = list()
+        variables = set()
+
         for key in self.dictionary:
-            keys = list(filter(lambda k: k.isupper(), key))
-            for x in keys:
-                variables.append(x)
+            keys = set(filter(lambda k: k.isupper(), key))
+            variables = variables.union(keys)
 
             for string in self.dictionary[key]:
-                values = list(filter(lambda v: v.isupper(), string))
-                for x in values:
-                    variables.append(x)
+                values = set(filter(lambda v: v.isupper(), string))
+                variables = variables.union(values)
 
-        return list(set(variables))
+        return list(variables)
 
     """
-    Returns all terminals in the grammar (lower case letters)
+    Returns all terminals in the grammar (lower case letters, digits and other symbols)
     """
     def get_terminals(self):
-        terminals = list()
+        terminals = set()
+
         for key in self.dictionary:
-            keys = list(filter(lambda k: k.islower(), key))
-            for x in keys:
-                terminals.append(x)
+            keys = set(filter(lambda k: not k.isupper(), key))
+            terminals = terminals.union(keys)
 
             for string in self.dictionary[key]:
-                values = list(filter(lambda v: v.islower(), string))
-                for x in values:
-                    terminals.append(x)
+                values = set(filter(lambda v: not v.isupper(), string))
+                terminals = terminals.union(values)
 
-        return list(set(terminals))
+        # Removes epsilon in case it exists
+        terminals -= (set(["&"]))
+
+        return list(terminals)
 
     """
     Given a production head, returns all its derivations
