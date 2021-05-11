@@ -183,8 +183,58 @@ class Grammar:
         pass
 
     def factor(self):
-        # TODO: implementar fatoração
+        heads = list(self.dictionary.keys())
+        grammar = self.dictionary
+        # Force S to be the first item analyzed
+        heads.remove('S')
+        heads.insert(0, 'S')
+
+        for head in heads:
+            productions = grammar[head]
+            candidates = productions.copy()
+            for production in productions:
+                if production[0].isupper():
+                    print("Production: " + production)
+                    print("Derives: ")
+                    print(self.find_inner_terminal(production))
+
+
         pass
+
+
+
+
+
+
+
+    """
+    Given a variable, return the derivation(s) that contains terminals as the 'head',
+    preserving the derivation 'tail'.
+    """
+    def find_inner_terminal(self, production):
+        variable = production[0]
+        grammar = self.dictionary
+        terminals = list()
+        appended = list()
+
+        for derivation in grammar[variable]:
+            head = derivation[0]
+            if head.islower():
+                # Found the derivation where the head is a terminal.
+                terminals.append(derivation)
+            else:
+                # No terminal head, must dive deeper.
+                inner_terminals = self.find_inner_terminal(head)
+                tail = derivation[1:]
+                # Append the derivations found to the rest of the original derivation.
+                for terminal in inner_terminals:
+                    terminals.append(terminal + tail)
+
+        while terminals:
+            appended.append(terminals.pop() + production[1:])
+
+        return appended
+
 
     """
     Returns the FIRST set of a sequence of characteres
@@ -270,3 +320,4 @@ class Grammar:
                             if len(beta) == 0 or "&" in first_beta:
                                 follow_table[char] = follow_table[char].union(follow_table[variable])
         return follow_table
+
