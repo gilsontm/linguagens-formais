@@ -185,31 +185,18 @@ class Grammar:
     def factor(self):
         heads = list(self.dictionary.keys())
         grammar = self.dictionary
-        # Force S to be the first item analyzed
-        heads.remove('S')
-        heads.insert(0, 'S')
-
-        for head in heads:
-            productions = grammar[head]
-            candidates = productions.copy()
-            for production in productions:
-                if production[0].isupper():
-                    print("Production: " + production)
-                    print("Derives: ")
-                    print(self.find_inner_terminal(production))
-
-
         pass
 
 
-
-
-
-
-
     """
-    Given a variable, return the derivation(s) that contains terminals as the 'head',
+    Given a production, return the derivation(s) that contains terminals as the 'head',
     preserving the derivation 'tail'.
+    Example:
+        S -> AB
+        A -> Cb | a
+        B -> bb
+
+    find_inner_terminal(AB) = ['aB, bbbB']
     """
     def find_inner_terminal(self, production):
         variable = production[0]
