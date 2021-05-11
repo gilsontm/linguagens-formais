@@ -222,6 +222,29 @@ class Grammar:
 
         return appended
 
+    """
+    Returns whether the grammar is deterministic.
+    Example of non-deterministic grammar:
+        S -> aS | a
+    Example of deterministic grammar:
+        S -> aB
+        B -> S | &
+    """
+    def is_deterministic(self):
+        variables = self.get_variables()
+        first_table = self.get_first_table()
+
+        for variable in variables:
+            # Calculates the FIRST set of each production under a given head.
+            firsts = [self.get_first(string, first_table) - set("&") for string in self.dictionary[variable]]
+            # Checks if there are any two derivations B -> alpha and B -> beta,
+            # such that (FIRST(alpha) intersect FIRST(beta)) != empty-set.
+            # If there are such derivations, then the grammar is non-deterministic.
+            for i in range(len(firsts)):
+                for j in range(i+1, len(firsts)):
+                    if len(firsts[i].intersection(firsts[j])) > 0:
+                        return False
+        return True
 
     """
     Returns the FIRST set of a sequence of characteres
