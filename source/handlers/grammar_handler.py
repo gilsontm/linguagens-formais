@@ -48,9 +48,12 @@ class GrammarHandler:
         path = get_file_path("grammar.txt")
         grammar = Grammar()
         grammar.from_json(request.get_json())
-        # TODO: implementar remoção de recursão à esquerda
-        new_grammar = grammar.remove_left_recursion()
-        new_grammar.to_file(path)
+        if not grammar.is_valid():
+            raise InvalidUsage(messages.INVALID_GRAMMAR)
+        if not grammar.is_context_free():
+            raise InvalidUsage(messages.GRAMMAR_NOT_CONTEXT_FREE)
+        grammar.remove_left_recursion()
+        grammar.to_file(path)
         return send_file(path, mimetype="text/plain")
 
     @blueprint.route("/factor", methods=["POST"])
@@ -58,7 +61,10 @@ class GrammarHandler:
         path = get_file_path("grammar.txt")
         grammar = Grammar()
         grammar.from_json(request.get_json())
-        # TODO: implementar fatoração
-        new_grammar = grammar.factor()
-        new_grammar.to_file(path)
+        if not grammar.is_valid():
+            raise InvalidUsage(messages.INVALID_GRAMMAR)
+        if not grammar.is_context_free():
+            raise InvalidUsage(messages.GRAMMAR_NOT_CONTEXT_FREE)
+        grammar.factor()
+        grammar.to_file(path)
         return send_file(path, mimetype="text/plain")
