@@ -172,102 +172,51 @@ class Grammar:
                 return False
         return True
 
+    def get_length_of_longest_derivation(self):
+        return max(map(len, sum(self.dictionary.values(), [])))
+
     """
     Returns true if a grammar is regular, false otherwise
     """
     def is_regular(self):
+        if not self.is_valid():
+            return False
         for k, v in self.dictionary.items():
             for derivation in v:
                 if len(k) != 1:
                     return False
-                if not k.isupper():
+                if not self.__is_variable(k):
                     return False
                 if len(derivation) > 2:
                     return False
-                if derivation[0].isupper():
+                if self.__is_variable(derivation[0]):
                     return False
-                if len(derivation) == 2 and derivation[1].islower():
+                if len(derivation) == 2 and self.__is_terminal(derivation[1]):
                     return False
         return True
 
-    def remove_left_recursion(self):
-        # TODO: implementar remoção de recursão à esquerda
-        pass
+    def is_context_free(self):
+        if not self.is_valid():
+            return False
+        for head in self.dictionary:
+            if len(head) != 1:
+                return False
+            if not self.__is_variable(head):
+                return False
+        return True
 
     def factor(self):
         iterations = 0
+        self.remove_left_recursion()
         while not self.is_deterministic() and iterations < Grammar.MAX_ITERATIONS:
+            length = self.get_length_of_longest_derivation()
+            for _ in range(length):
+                self.remove_direct_non_determinism()
             self.remove_indirect_non_determinism()
-            self.remove_direct_non_determinism()
             iterations += 1
-        if iterations > Grammar.MAX_ITERATIONS:
+        if iterations >= Grammar.MAX_ITERATIONS:
             raise InvalidUsage(messages.GRAMMAR_UNSUPORTED)
         return iterations
-
-    def remove_direct_nd(self, productions):
-        new_productions = {"unchanged": []}
-        repeated_heads = self.nd_heads(productions)
-
-        for head in repeated_heads:
-            new_productions[head] = list()
-
-        for x in range(len(productions)):
-            prod = productions.pop()
-            head = prod[0]
-            if head in repeated_heads:
-                new_productions[head].append(prod[1:])
-            else:
-                new_productions["unchanged"].append(prod)
-
-        return new_productions
-
-    def nd_heads(self, productions):
-        heads = [h[0] for h in productions]
-
-        seen = list()
-        repeated = list()
-
-        for head in heads:
-            if head in seen:
-                repeated.append(head)
-            seen.append(head)
-
-        return repeated
-
-    """
-    Given a production, return the derivation(s) that contains terminals as the 'head',
-    preserving the derivation 'tail'.
-    Example:
-        S -> AB
-        A -> Cb | a
-        B -> bb
-
-    find_inner_terminal(AB) = ['aB, bbbB']
-    """
-    def find_inner_terminal(self, production):
-        variable = production[0]
-        grammar = self.dictionary
-        terminals = list()
-        appended = list()
-
-        productions = grammar[variable]
-        for derivation in grammar[variable]:
-            head = derivation[0]
-            if head.islower():
-                # Found the derivation where the head is a terminal.
-                terminals.append(derivation)
-            else:
-                # No terminal head, must dive deeper.
-                inner_terminals = self.find_inner_terminal(head)
-                tail = derivation[1:]
-                # Append the derivations found to the rest of the original derivation.
-                for terminal in inner_terminals:
-                    terminals.append(terminal + tail)
-
-        while terminals:
-            appended.append(terminals.pop() + production[1:])
-
-        return appended
 
     def remove_direct_non_determinism(self):
         variables = self.get_variables()
@@ -275,18 +224,18 @@ class Grammar:
             derivations = self.dictionary[variable]
             mapping = {}
             for derivation in derivations:
-                head, *tail = derivation
+                head = derivation[0]
+                tail = derivation[1:]
                 if head not in mapping:
                     mapping[head] = []
-                mapping[head].append("".join(tail))
+                mapping[head].append(self.__concat(tail))
             for head, tails in mapping.items():
                 if len(tails) == 1:
                     continue
                 for tail in tails:
-                    derivations.remove(head + tail)
-                tails = list(map(lambda x: "&" if len(x) == 0 else x, tails))
+                    derivations.remove(self.__concat(head, tail))
                 new_variable = self.get_new_variable_name()
-                derivations.append(head + new_variable)
+                derivations.append(self.__concat(head, new_variable))
                 self.dictionary[new_variable] = tails
 
     def remove_indirect_non_determinism(self):
@@ -294,17 +243,12 @@ class Grammar:
         for variable in variables:
             derivations = copy.deepcopy(self.dictionary[variable])
             for derivation in derivations:
-                head, *tail = derivation
-                tail = "&" if len(tail) == 0 else "".join(tail)
+                head = derivation[0]; tail = derivation[1:]
                 if self.__is_variable(head):
+                    subderivations = copy.deepcopy(self.dictionary[head])
                     self.dictionary[variable].remove(derivation)
-                    for subderivation in self.dictionary[head]:
-                        if subderivation == "&":
-                            new_derivation = tail
-                        elif tail == "&":
-                            new_derivation = subderivation
-                        else:
-                            new_derivation = subderivation + tail
+                    for subderivation in subderivations:
+                        new_derivation = self.__concat(subderivation, tail)
                         if new_derivation not in self.dictionary[variable]:
                             self.dictionary[variable].append(new_derivation)
 
@@ -342,12 +286,14 @@ class Grammar:
                         return False
         return True
 
-
-    def find_free_symbol(self):
-        symbol = ord('A')
-        while chr(symbol) in self.dictionary:
-            symbol = symbol + 1
-        return chr(symbol)
+    def __concat(self, alfa, beta=""):
+        alfa = alfa if len(alfa) > 0 else "&"
+        beta = beta if len(beta) > 0 else "&"
+        if alfa == "&":
+            return beta
+        if beta == "&":
+            return alfa
+        return alfa + beta
 
     def remove_left_recursion(self):
         N = self.get_variables()
@@ -365,21 +311,20 @@ class Grammar:
                         # Se Aj ::= B pertence a P
                         #    P_ = P_ U {Ai ::= BA}
                         for beta in self.get_derivations(Aj):
-                            self.add_derivation(Ai, beta + alfa)
-                        print(self.to_json())
+                            self.add_derivation(Ai, self.__concat(beta, alfa))
             """
                 Elimine as recursões diretas das produções de P_ com lado esquerdo Ai
             """
             c1 = []
             c2 = []
-            Ai_ = self.find_free_symbol()
+            Ai_ = self.get_new_variable_name()
             for derivation in self.get_derivations(Ai):
-                if derivation and derivation[0] == Ai:
-                    c2.append(derivation[1::] + Ai_)
-                elif derivation:
-                    c1.append(derivation + Ai_)
+                if derivation != "&" and derivation[0] == Ai:
+                    c2.append(self.__concat(derivation[1::], Ai_))
+                elif derivation != "&":
+                    c1.append(self.__concat(derivation, Ai_))
             # Adiciona-se epsilon
-            c2.append("")
+            c2.append("&")
             if not c1:
                 c1.append(Ai_)
             self.add_key(Ai, c1)
