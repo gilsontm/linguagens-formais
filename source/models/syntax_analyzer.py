@@ -27,6 +27,8 @@ class SyntaxAnalyzer:
             raise InvalidUsage(messages.INVALID_GRAMMAR)
         if not self.grammar.is_valid():
             raise InvalidUsage(messages.INVALID_GRAMMAR)
+        if not self.grammar.is_context_free():
+            raise InvalidUsage(messages.GRAMMAR_NOT_CONTEXT_FREE)
 
         # TODO: fatorar e remover recursão à esquerda
 
