@@ -125,7 +125,10 @@ class Grammar:
     Adds a derivation given the production head
     """
     def add_derivation(self, key, value):
-        self.dictionary[key].append(value)
+        if key not in self.dictionary:
+            self.add_key(key, [value])
+        else:
+            self.dictionary[key].append(value)
 
     """
     Returns whether a grammar is valid.
@@ -230,7 +233,6 @@ class Grammar:
             seen.append(head)
 
         return repeated
-
 
     """
     Given a production, return the derivation(s) that contains terminals as the 'head',
@@ -340,6 +342,49 @@ class Grammar:
                         return False
         return True
 
+
+    def find_free_symbol(self):
+        symbol = ord('A')
+        while chr(symbol) in self.dictionary:
+            symbol = symbol + 1
+        return chr(symbol)
+
+    def remove_left_recursion(self):
+        N = self.get_variables()
+        for i in range(len(N)):
+            Ai = N[i]
+            # para j = 1 até i-1
+            for j in range(i):
+                Aj = N[j]
+                derivations = self.get_derivations(Ai)
+                for derivation in list(derivations):
+                    if derivation and derivation[0] == Aj:
+                        # Remova Ai ::= Aj de P
+                        derivations.remove(derivation)
+                        alfa = derivation[1::]
+                        # Se Aj ::= B pertence a P
+                        #    P_ = P_ U {Ai ::= BA}
+                        for beta in self.get_derivations(Aj):
+                            self.add_derivation(Ai, beta + alfa)
+                        print(self.to_json())
+            """
+                Elimine as recursões diretas das produções de P_ com lado esquerdo Ai
+            """
+            c1 = []
+            c2 = []
+            Ai_ = self.find_free_symbol()
+            for derivation in self.get_derivations(Ai):
+                if derivation and derivation[0] == Ai:
+                    c2.append(derivation[1::] + Ai_)
+                elif derivation:
+                    c1.append(derivation + Ai_)
+            # Adiciona-se epsilon
+            c2.append("")
+            if not c1:
+                c1.append(Ai_)
+            self.add_key(Ai, c1)
+            self.add_key(Ai_, c2)
+
     """
     Returns the FIRST set of a sequence of characteres
     """
@@ -424,4 +469,3 @@ class Grammar:
                             if len(beta) == 0 or "&" in first_beta:
                                 follow_table[char] = follow_table[char].union(follow_table[variable])
         return follow_table
-
