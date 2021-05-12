@@ -43,9 +43,22 @@ class GrammarHandler:
         converter.automata.to_file(path)
         return send_file(path, mimetype="text/plain")
 
-    # @blueprint.route("/remove-left-recursion", methods=["POST"])
-    # def export_grammar_afd():
-    #     grammar = Grammar()
-    #     grammar.from_json(request.get_json())
-    #     grammar.remove_left_recursion()
-    #     return grammar.to_json()
+    @blueprint.route("/remove-left-recursion", methods=["POST"])
+    def remove_left_recursion():
+        path = get_file_path("grammar.txt")
+        grammar = Grammar()
+        grammar.from_json(request.get_json())
+        # TODO: implementar remoção de recursão à esquerda
+        new_grammar = grammar.remove_left_recursion()
+        new_grammar.to_file(path)
+        return send_file(path, mimetype="text/plain")
+
+    @blueprint.route("/factor", methods=["POST"])
+    def factor():
+        path = get_file_path("grammar.txt")
+        grammar = Grammar()
+        grammar.from_json(request.get_json())
+        # TODO: implementar fatoração
+        new_grammar = grammar.factor()
+        new_grammar.to_file(path)
+        return send_file(path, mimetype="text/plain")

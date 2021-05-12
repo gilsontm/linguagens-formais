@@ -19,10 +19,22 @@
                 </svg>
                 Limpar
             </button>
+            <button id="{{prefix_id}}-factor" class="btn mr-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-percent" viewBox="0 0 20 20">
+                    <path d="M13.442 2.558a.625.625 0 0 1 0 .884l-10 10a.625.625 0 1 1-.884-.884l10-10a.625.625 0 0 1 .884 0zM4.5 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zm7 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 1a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"/>
+                </svg>
+                Fatorar
+            </button>
+            <button id="{{prefix_id}}-remove-left-recursion" class="btn mr-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-wrench" viewBox="0 0 20 20">
+                    <path d="M.102 2.223A3.004 3.004 0 0 0 3.78 5.897l6.341 6.252A3.003 3.003 0 0 0 13 16a3 3 0 1 0-.851-5.878L5.897 3.781A3.004 3.004 0 0 0 2.223.1l2.141 2.142L4 4l-1.757.364L.102 2.223zm13.37 9.019.528.026.287.445.445.287.026.529L15 13l-.242.471-.026.529-.445.287-.287.445-.529.026L13 15l-.471-.242-.529-.026-.287-.445-.445-.287-.026-.529L11 13l.242-.471.026-.529.445-.287.287-.445.529-.026L13 11l.471.242z"/>
+                </svg>
+                Remover recursão à esquerda
+            </button>
             <button id="{{prefix_id}}-grammar-to-automata" class="btn mr-1">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-hammer" viewBox="0 0 20 20">
                     <path d="M9.972 2.508a.5.5 0 0 0-.16-.556l-.178-.129a5.009 5.009 0 0 0-2.076-.783C6.215.862 4.504 1.229 2.84 3.133H1.786a.5.5 0 0 0-.354.147L.146 4.567a.5.5 0 0 0 0 .706l2.571 2.579a.5.5 0 0 0 .708 0l1.286-1.29a.5.5 0 0 0 .146-.353V5.57l8.387 8.873A.5.5 0 0 0 14 14.5l1.5-1.5a.5.5 0 0 0 .017-.689l-9.129-8.63c.747-.456 1.772-.839 3.112-.839a.5.5 0 0 0 .472-.334z"/>
-                  </svg>
+                </svg>
                 Converter para autômato
             </button>
         </div>
@@ -41,6 +53,8 @@
         const REMOVE_SENTENCE = ".{{prefix_id}}-remove-sentence";
         const ADD_FORM_ROW = ".{{prefix_id}}-add-form-row";
         const CLEAR_SENTENCES = "#{{prefix_id}}-clear-sentences";
+        const FACTOR_BTN = "#{{prefix_id}}-factor";
+        const LEFT_RECURSION_BTN = "#{{prefix_id}}-remove-left-recursion";
         const CONVERT_GRAMMAR_BTN = "#{{prefix_id}}-grammar-to-automata";
         const ROW_FIELD_TEMPLATE = `
             <div class="col-1 m-1">
@@ -81,9 +95,19 @@
 
         $(CLEAR_SENTENCES).click(clear_grammar_form);
 
+        $(FACTOR_BTN).click(() => {
+            let data = export_grammar();
+            post_export("/grammar/factor", JSON.stringify(data), "grammar.txt");
+        });
+
+        $(LEFT_RECURSION_BTN).click(() => {
+            let data = export_grammar();
+            post_export("/grammar/remove-left-recursion", JSON.stringify(data), "grammar.txt");
+        });
+
         $(CONVERT_GRAMMAR_BTN).click(() => {
             let data = export_grammar();
-            post_export("/grammar/to-automata", JSON.stringify(data), "grammar-to-automata.txt");
+            post_export("/grammar/to-automata", JSON.stringify(data), "automata.txt");
         });
 
         $("body").on("click", ADD_FORM_ROW, event => {

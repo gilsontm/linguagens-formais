@@ -8,6 +8,10 @@ svg.bi {
     height: 50vh;
 }
 
+.h-25vh {
+    height: 25vh;
+}
+
 .vertical-menu {
     position: fixed;
     z-index: 1;

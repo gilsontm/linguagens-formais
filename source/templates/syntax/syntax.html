@@ -1,0 +1,156 @@
+{% macro syntax(prefix_id='') %}
+    <div class="container">
+        <h2 class="text-center mt-5"> Análise Sintática </h2>
+
+        <div class="row my-3">
+            <div class="col-3">
+                <button id="{{prefix_id}}-run-syntax-analysis" class="btn mr-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-tree" viewBox="0 0 20 20">
+                        <path d="M8.416.223a.5.5 0 0 0-.832 0l-3 4.5A.5.5 0 0 0 5 5.5h.098L3.076 8.735A.5.5 0 0 0 3.5 9.5h.191l-1.638 3.276a.5.5 0 0 0 .447.724H7V16h2v-2.5h4.5a.5.5 0 0 0 .447-.724L12.31 9.5h.191a.5.5 0 0 0 .424-.765L10.902 5.5H11a.5.5 0 0 0 .416-.777l-3-4.5zM6.437 4.758A.5.5 0 0 0 6 4.5h-.066L8 1.401 10.066 4.5H10a.5.5 0 0 0-.424.765L11.598 8.5H11.5a.5.5 0 0 0-.447.724L12.69 12.5H3.309l1.638-3.276A.5.5 0 0 0 4.5 8.5h-.098l2.022-3.235a.5.5 0 0 0 .013-.507z"/>
+                    </svg>
+                    Executar análise sintática
+                </button>
+            </div>
+            <div class="col-9">
+                <div class="custom-file">
+                    <input id="{{prefix_id}}-syntax-grammar-file" type="file" class="custom-file-input">
+                    <label class="custom-file-label" for="{{prefix_id}}-syntax-grammar-file"> Escolha a gramática livre de contexto... </label>
+                </div>
+            </div>
+        </div>
+        <div class="my-3">
+            <input id="{{prefix_id}}-syntax-sentence" type="text" class="form-control placeholder="Sentença">
+            <small id="{{prefix_id}}-syntax-sentence-accepted" class="text-success d-none"> A sentença foi aceita. </small>
+            <small id="{{prefix_id}}-syntax-sentence-rejected" class="text-danger d-none"> A sentença foi rejeitada. </small>
+        </div>
+
+        <div class="row my-3">
+            <div class="col-8">
+                <h5 class="text-center"> Tabela de análise LL(1) </h5>
+                <div class="h-50vh text-center scrollable">
+                    <div id="{{prefix_id}}-syntax-table-header" class="row no-gutters bg-light fixed-header">
+                        <div class="col border p-2"> <b>N/T</b> </div>
+                    </div>
+                    <div id="{{prefix_id}}-syntax-table">
+                        <div class="w-100 border">
+                            <p class="p-3 m-0"> Nenhum resultado. </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4">
+                <h5 class="text-center"> Pilha de execução </h5>
+                <div class="h-50vh text-center scrollable">
+                    <div class="row no-gutters bg-light fixed-header">
+                        <div class="col border p-2"> <b>Pilha</b> </div>
+                        <div class="col border p-2"> <b>Entrada</b> </div>
+                    </div>
+                    <div id="{{prefix_id}}-syntax-stack-table">
+                        <div class="w-100 border">
+                            <p class="p-3 m-0"> Nenhum resultado. </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        const SYNTAX_TABLE = "#{{prefix_id}}-syntax-table";
+        const SYNTAX_TABLE_HEADER = "#{{prefix_id}}-syntax-table-header";
+        const SYNTAX_TABLE_HEADER_FIRST_ITEM = `<div class="col border p-2"> <b>N/T</b> </div>`;
+
+        const SYNTAX_STACK_TABLE = "#{{prefix_id}}-syntax-stack-table";
+
+        const SYNTAX_SENTENCE = "#{{prefix_id}}-syntax-sentence";
+        const SYNTAX_GRAMMAR_FILE = "#{{prefix_id}}-syntax-grammar-file";
+        const RUN_SYNTAX_ANALYSIS_BTN = "#{{prefix_id}}-run-syntax-analysis";
+
+        const SYNTAX_SENTENCE_ACCEPTED = "#{{prefix_id}}-syntax-sentence-accepted";
+        const SYNTAX_SENTENCE_REJECTED = "#{{prefix_id}}-syntax-sentence-rejected";
+
+        $(SYNTAX_GRAMMAR_FILE).change(event => {
+            $(SYNTAX_GRAMMAR_FILE).next().html($(SYNTAX_GRAMMAR_FILE).prop("files")[0].name);
+        });
+
+        $(RUN_SYNTAX_ANALYSIS_BTN).click(run_syntax_analysis);
+
+        function run_syntax_analysis() {
+            let form = new FormData();
+            form.append("file", $(SYNTAX_GRAMMAR_FILE).prop("files")[0]);
+            form.append("sentence", $(SYNTAX_SENTENCE).val());
+            $.ajax({
+                type: "POST",
+                url: "/syntax/run-analysis",
+                data: form,
+                success: res => populate_syntax_results(res),
+                error: res => clear_syntax_tables_on_error(res),
+                contentType: false,
+                processData: false,
+            });
+        }
+
+        function clear_syntax_tables_on_error(res) {
+            $(SYNTAX_TABLE).html(EMPTY_TABLE_TEMPLATE);
+            $(SYNTAX_TABLE_HEADER).html(SYNTAX_TABLE_HEADER_FIRST_ITEM);
+            $(SYNTAX_STACK_TABLE).html(EMPTY_TABLE_TEMPLATE);
+            $(SYNTAX_SENTENCE_ACCEPTED).addClass("d-none");
+            $(SYNTAX_SENTENCE_REJECTED).addClass("d-none");
+            show_error(res);
+        }
+
+        function populate_syntax_results(res) {
+            console.log(res);
+            populate_syntax_table(res);
+            populate_syntax_stack_table(res);
+            if (res.accepted) {
+                $(SYNTAX_SENTENCE_ACCEPTED).removeClass("d-none");
+                $(SYNTAX_SENTENCE_REJECTED).addClass("d-none");
+            } else {
+                $(SYNTAX_SENTENCE_ACCEPTED).addClass("d-none");
+                $(SYNTAX_SENTENCE_REJECTED).removeClass("d-none");
+            }
+        }
+
+        function populate_syntax_table(res) {
+            let table = $(SYNTAX_TABLE);
+            let header = $(SYNTAX_TABLE_HEADER);
+            table.html("");
+            header.html(SYNTAX_TABLE_HEADER_FIRST_ITEM);
+            if (!res || !res.table || !res.variables || !res.terminals) {
+                table.append(EMPTY_TABLE_TEMPLATE);
+            } else {
+                for (terminal of res.terminals) {
+                    header.append(`<div class="col border p-2"> <b> ${terminal} </b> </div>`);
+                }
+                for (variable of res.variables) {
+                    let row = `<div class="col p-2 border"> <b> ${variable} </b> </div>`;
+                    for (terminal of res.terminals) {
+                        let derivation = res.table[variable][terminal];
+
+                        row += `<div class="col p-2 border"> ${derivation ? derivation : "/"} </div>`;
+                    }
+                    table.append(`<div class="row no-gutters"> ${row} </div>`);
+                }
+            }
+        }
+
+        function populate_syntax_stack_table(res) {
+            let table = $(SYNTAX_STACK_TABLE);
+            table.html("");
+            if (!res || !res.stacktrace) {
+                table.append(EMPTY_TABLE_TEMPLATE);
+            } else {
+                for (trace of res.stacktrace) {
+                    table.append(`
+                        <div class="row no-gutters">
+                            <div class="col py-2 px-3 border text-left"> ${trace.stack.join(" ")} </div>
+                            <div class="col py-2 px-3 border text-right"> ${trace.entry} </div>
+                        </div>
+                    `);
+                }
+            }
+        }
+
+    </script>
+{% endmacro %}
