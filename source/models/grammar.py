@@ -187,6 +187,36 @@ class Grammar:
         grammar = self.dictionary
         pass
 
+    def remove_direct_nd(self, productions):
+        new_productions = {"unchanged": []}
+        repeated_heads = self.nd_heads(productions)
+
+        for head in repeated_heads:
+            new_productions[head] = list()
+
+        for x in range(len(productions)):
+            prod = productions.pop()
+            head = prod[0]
+            if head in repeated_heads:
+                new_productions[head].append(prod[1:])
+            else:
+                new_productions["unchanged"].append(prod)
+
+        return new_productions
+
+    def nd_heads(self, productions):
+        heads = [h[0] for h in productions]
+
+        seen = list()
+        repeated = list()
+
+        for head in heads:
+            if head in seen:
+                repeated.append(head)
+            seen.append(head)
+
+        return repeated
+
 
     """
     Given a production, return the derivation(s) that contains terminals as the 'head',
@@ -204,6 +234,7 @@ class Grammar:
         terminals = list()
         appended = list()
 
+        productions = grammar[variable]
         for derivation in grammar[variable]:
             head = derivation[0]
             if head.islower():
