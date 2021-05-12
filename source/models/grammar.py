@@ -1,7 +1,13 @@
 import copy
+import string
+from utils import messages
+from exceptions.invalid_usage import InvalidUsage
 
 
 class Grammar:
+
+    # Set of all uppercase letters
+    VARIABLES = set(string.ascii_uppercase)
 
     def __init__(self):
         self.dictionary = {}
@@ -252,6 +258,37 @@ class Grammar:
             appended.append(terminals.pop() + production[1:])
 
         return appended
+
+    def remove_direct_non_determinism(self):
+        variables = self.get_variables()
+        for variable in variables:
+            derivations = self.dictionary[variable]
+            mapping = {}
+            for derivation in derivations:
+                initial, *tail = derivation
+                if self.__is_terminal(initial):
+                    if initial not in mapping:
+                        mapping[initial] = []
+                    mapping[initial].append("".join(tail))
+            for terminal, tails in mapping.items():
+                if len(tails) == 1:
+                    continue
+                for tail in tails:
+                    derivations.remove(terminal + tail)
+                tails = list(map(lambda x: "&" if len(x) == 0 else x, tails))
+                new_variable = self.get_new_variable_name()
+                derivations.append(terminal + new_variable)
+                self.dictionary[new_variable] = tails
+
+    """
+    Returns a variable name that is unused.
+    If there aren't any available, raises InvalidUsage exception.
+    """
+    def get_new_variable_name(self):
+        available = Grammar.VARIABLES - set(self.get_variables())
+        if len(available) == 0:
+            raise InvalidUsage(messages.GRAMMAR_UNSUPORTED)
+        return list(available)[0]
 
     """
     Returns whether the grammar is deterministic.
