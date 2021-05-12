@@ -42,3 +42,10 @@ class GrammarHandler:
         converter.grammar_to_automata(grammar)
         converter.automata.to_file(path)
         return send_file(path, mimetype="text/plain")
+
+    # @blueprint.route("/remove-left-recursion", methods=["POST"])
+    # def export_grammar_afd():
+    #     grammar = Grammar()
+    #     grammar.from_json(request.get_json())
+    #     grammar.remove_left_recursion()
+    #     return grammar.to_json()
