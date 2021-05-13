@@ -42,3 +42,29 @@ class GrammarHandler:
         converter.grammar_to_automata(grammar)
         converter.automata.to_file(path)
         return send_file(path, mimetype="text/plain")
+
+    @blueprint.route("/remove-left-recursion", methods=["POST"])
+    def remove_left_recursion():
+        path = get_file_path("grammar.txt")
+        grammar = Grammar()
+        grammar.from_json(request.get_json())
+        if not grammar.is_valid():
+            raise InvalidUsage(messages.INVALID_GRAMMAR)
+        if not grammar.is_context_free():
+            raise InvalidUsage(messages.GRAMMAR_NOT_CONTEXT_FREE)
+        grammar.remove_left_recursion()
+        grammar.to_file(path)
+        return send_file(path, mimetype="text/plain")
+
+    @blueprint.route("/factor", methods=["POST"])
+    def factor():
+        path = get_file_path("grammar.txt")
+        grammar = Grammar()
+        grammar.from_json(request.get_json())
+        if not grammar.is_valid():
+            raise InvalidUsage(messages.INVALID_GRAMMAR)
+        if not grammar.is_context_free():
+            raise InvalidUsage(messages.GRAMMAR_NOT_CONTEXT_FREE)
+        grammar.factor()
+        grammar.to_file(path)
+        return send_file(path, mimetype="text/plain")
